@@ -28,11 +28,11 @@ We propose creating a dashboard website that explores environmental data associa
 
 ## 2. Persona/Scenario
 
-i. Persona:
+### i. Persona:
 <br>
 Text
 
-ii. Scenario:
+### ii. Scenario:
 <br>
 Text
 
@@ -41,7 +41,7 @@ Text
 
 ## 3. Requirements Document
 
-i. Representation:
+### i. Representation:
 <br>
 Each basemap tileset or context overlay:
 
@@ -50,7 +50,7 @@ Each basemap tileset or context overlay:
 | Basemap of USA | Natural Earth | Neutral base layer |
 | Watersheds of the Mississippi River | HydroSHEDS | Distinct borders, fill color based on data |
 
-ii. Interaction
+### ii. Interaction
 <br>
 Each unique interface widget:
 
