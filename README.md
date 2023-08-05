@@ -63,8 +63,8 @@ Each unique interface widget: <br>
 ## 4. Wireframes
 
 Wireframe for web:<br>
-![Wireframe for web](/img/MissBasins_Wireframes-web.png)
+![Wireframe for web](img/MissBasins_Wireframes-web.png)
 <br>
 Wireframe for mobile:<br>
-![Wireframe for mobile](img/MissBasins_Wireframes-web.png)
+![Wireframe for mobile](img/MissBasins_Wireframes-mobile.png)
 
