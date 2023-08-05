@@ -16,13 +16,13 @@ Geog575_FinalProject_Mississippi-River-Basins
 4. Wireframes
 
 ---
-<br>
+
 ## 1. Project Summary
 We propose creating a dashboard website that explores environmental data associated with drainage basins of the Mississippi River in central USA. We would like to create a large interactive map that lets the user see the full extent of the Mississippi River drainage system and zoom into specific sub-basins to look at data per basin, using data from HydroSHEDS, an environmentally focused global watershed database. We would like the user to be able to select datasets to show on a choropleth map of the sub-basins with an adjacent chart or set of charts that summarize the data. We would like to include the option to include a bivariate analysis.
 
 
 
-<br>
+
 ## 2. Persona/Scenario
 
 ### i. Persona:
@@ -35,7 +35,7 @@ Text
 
 
 
-<br>
+
 ## 3. Requirements Document
 
 ### i. Representation:
@@ -59,12 +59,12 @@ Each unique interface widget: <br>
 
 
 
-<br>
+
 ## 4. Wireframes
 
 Wireframe for web:<br>
 ![Wireframe for web](/img/MissBasins_Wireframes-web.png)
 <br>
 Wireframe for mobile:<br>
-![Wireframe for mobile](/img/MissBasins_Wireframes-web.png)
+![Wireframe for mobile](img/MissBasins_Wireframes-web.png)
 
