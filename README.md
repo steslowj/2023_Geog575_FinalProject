@@ -68,9 +68,10 @@ Each unique interface widget: <br>
 | Reset View button |   | Resents map zoom level and extent, does not change layers |
 | Data Per Basin button |   | Button brings data view menus back to the screen |
 | Basin Level Slider | Reexpress | User can select which basin level dataset to view on the map |
-| Select Data dropdowns |   |   |
+| Select Data dropdowns |   | User can choose "no data" or select a variable, for each dropdown. The map will update with basin color dependant on the data, and a chart below the menus will describe the data. |
 | X button on data menus |   | Allows user to close menus when not wanted |
 | Links on sidebar |   | Opens contextual information for user to read |
+| Mouse hover over basins |   | Hovering over basins will display a tooltip that describes the data for the individual basin |
 
 
 
