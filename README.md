@@ -63,14 +63,17 @@ Each unique interface widget: <br>
 | Map scaled to Miss. watershed extent | Zoom, Pan | Allows user to explore the extent with expected mouse behavior: click&drag, scroll wheel |
 | Datasets per sub-basin | Overlay | User selects which data to display via choropleth on map |
 | Layers button | 'change display' | User selects data to add or remove from map |
-| +/- button | Zoom | User can zoom map by clicking on +\- buttons | 
+| +/- button | Zoom | User can zoom map by clicking on +\- buttons |
+| Menu toggle button (top left corner) |   | Opens and closes side bar. Sidebar is opened over map and data panels. |
+| Reset View button |   | Resents map zoom level and extent, does not change layers |
+| Data Per Basin button |   | Button brings data view menus back to the screen |
 | Basin Level Slider | Reexpress | User can select which basin level dataset to view on the map |
 | Select Data dropdowns |   |   |
 | X button on data menus |   | Allows user to close menus when not wanted |
-| Reset View button |   |   |
-| Data Per Basin button |   | Button brings data view menus back to the screen |
-| Menu toggle button (top left corner) |   | Opens and closes side bar |
 | Links on sidebar |   | Opens contextual information for user to read |
+
+
+
 
 
 
