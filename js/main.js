@@ -8,6 +8,8 @@
 
   //psuedo-global variables
   var map;
+  var stats = {};
+  var basinVals = [];
   
   //array for data file paths to use
   var basinFilePath = [
@@ -23,7 +25,7 @@
   ]
 
   //objects to define descriptions, unit, spatial extent, dimension, and land cover & climate classes
-  var attributeDescription = 
+  var attrDescription = 
         {"HYBAS_ID": "HydroBASIN ID",
         "DIST_SINK": "Distance from polygon outlet to next downstream sink",
         "DIST_MAIN": "Distance from polygon outlet to most downstream sink",
@@ -61,7 +63,7 @@
         "rdd": "Road density",
         "gpd": "Gross Domestic Product"
       }
-  var attributeUnit = 
+  var attrUnit = 
         {"m3": "cubic meters per second",
         "mm": "millimeters",
         "pc": "percent",
@@ -78,12 +80,12 @@
         "mk": "meters per square kilometer",
         "ud": "US dollars"
       };
-  var attributeExtent = 
+  var attrExtent = 
         {"p": "at sub-basin pour point",
         "s": "per sub-basin",
         "u": "in total watershed of sub-basin pour point"
       };
-  var attributeDimension = 
+  var attrDimension = 
         {"yr": "annual average",
         "mn": "annual minimum",
         "mx": "annual maximum",
@@ -95,142 +97,256 @@
         "g2": "25-50% wetland",
         "su": "sum"
       };
-  var landCoverClasses = {
-      1:	"Tree cover, broadleaved, evergreen",
-      2:	"Tree cover, broadleaved, deciduous, closed",
-      3:	"Tree cover, broadleaved, deciduous, open",
-      4:	"Tree cover, needle-leaved, evergreen",
-      5:	"Tree cover, needle-leaved, deciduous",
-      6:	"Tree cover, mixed leaf type",
-      7:	"Tree cover, regularly flooded, fresh",
-      8:	"Tree cover, regularly flooded, saline, (daily variation)",
-      9:	"Mosaic: tree cover/other natural vegetation",
-      10:	"Tree cover, burnt",
-      11:	"Shrub cover, closed-open, evergreen (with or without sparse tree layer)",
-      12:	"Shrub cover, closed-open, deciduous (with or without sparse tree layer)",
-      13:	"Herbaceous cover, closed-open",
-      14:	"Sparse herbaceous or sparse shrub cover",
-      15:	"Regularly flooded shrub and/or herbaceous cover",
-      16:	"Cultivated and managed areas",
-      17:	"Mosaic: cropland/tree cover/other natural vegetation",
-      18:	"Mosaic: cropland/shrub and/or herbaceous cover",
-      19:	"Bare areas",
-      20:	"Water bodies (natural and artificial)",
-      21:	"Snow and ice (natural and artificial)",
-      22:	"Artificial surfaces and associated areas",
-      23:	"No data"
-    };
-  var climateZoneClasses = {
-      1:	"Arctic 1	(A)",
-      2:	"Arctic 2	(B)",
-      3:	"Extremely cold and wet 1	(C)",
-      4:	"Extremely cold and wet 2	(D)",
-      5:	"Cold and wet	(E)",
-      6:	"Extremely cold and mesic	(F)",
-      7:	"Cold and mesic	(G)",
-      8:	"Cool temperate and dry	(H)",
-      9:	"Cool temperate and xeric	(I)",
-      10:	"Cool temperate and moist	(J)",
-      11:"	Warm temperate and mesic	(K)",
-      12:	"Warm temperate and xeric	(L)",
-      13:	"Hot and mesic	(M)",
-      14:	"Hot and dry	(N)",
-      15:	"Hot and arid	(O)",
-      16:	"Extremely hot and arid	(P)",
-      17:	"Extremely hot and xeric	(Q)",
-      18:	"Extremely hot and moist	(R)"
-    };
-  //attribute matching 20230816 Basin08 geojson. May further reduce. Basin02 has less than, possibly less u?
-  //var attributeArray = ["HYBAS_ID","DIST_SINK","DIST_MAIN","SUB_AREA","UP_AREA","PFAF_ID","ORDER_","dis_m3_pyr","run_mm_syr","inu_pc_smn","inu_pc_umn","inu_pc_smx","inu_pc_umx","inu_pc_slt","inu_pc_ult","ria_ha_ssu","ria_ha_usu","gwt_cm_sav","ele_mt_sav","ele_mt_uav","sgr_dk_sav","clz_cl_smj","tmp_dc_syr","tmp_dc_uyr","pre_mm_syr","pre_mm_uyr","aet_mm_syr","aet_mm_uyr","cmi_ix_syr","cmi_ix_uyr","glc_cl_smj","glc_pc_s01","glc_pc_s02","glc_pc_s04","glc_pc_s06","glc_pc_s09","glc_pc_s11","glc_pc_s12","glc_pc_s13","glc_pc_s14","glc_pc_s15","glc_pc_s16","glc_pc_s18","glc_pc_s20","glc_pc_s22","glc_pc_u01","glc_pc_u02","glc_pc_u04","glc_pc_u06","glc_pc_u09","glc_pc_u11","glc_pc_u12","glc_pc_u13","glc_pc_u14","glc_pc_u15","glc_pc_u16","glc_pc_u18","glc_pc_u20","glc_pc_u22","wet_pc_sg1","wet_pc_ug1","wet_pc_sg2","wet_pc_ug2","for_pc_sse","for_pc_use","crp_pc_sse","crp_pc_use","pst_pc_sse","pst_pc_use","ire_pc_sse","ire_pc_use","pac_pc_sse","pac_pc_use","cly_pc_sav","cly_pc_uav","slt_pc_sav","slt_pc_uav","snd_pc_sav","snd_pc_uav","soc_th_sav","soc_th_uav","swc_pc_syr","swc_pc_uyr","ero_kh_sav","ero_kh_uav","ppd_pk_sav","ppd_pk_uav","urb_pc_sse","urb_pc_use","rdd_mk_sav","rdd_mk_uav","gdp_ud_sav","gdp_ud_ssu","gdp_ud_usu"]
+  var landCoverClasses = { //colors taken from BasinATLAS Catalog
+      1:	{classDesc: "Tree cover, broadleaved, evergreen", color:"#277300"},
+      2:	{classDesc: "Tree cover, broadleaved, deciduous, closed", color: '#38a800'},
+      3:	{classDesc: "Tree cover, broadleaved, deciduous, open", color: '#6fa900'},
+      4:	{classDesc: "Tree cover, needle-leaved, evergreen", color: '#89cd66'},
+      5:	{classDesc: "Tree cover, needle-leaved, deciduous", color: '#89ce64'},
+      6:	{classDesc: "Tree cover, mixed leaf type", color: '#727200'},
+      7:	{classDesc: "Tree cover, regularly flooded, fresh", color: '#458970'},
+      8:	{classDesc: "Tree cover, regularly flooded, saline, (daily variation)", color: '#436584'},
+      9:	{classDesc: "Mosaic: tree cover/other natural vegetation", color: '#a9a800'},
+      10:	{classDesc: "Tree cover, burnt", color: '#8a4444'},
+      11:	{classDesc: "Shrub cover, closed-open, evergreen (with or without sparse tree layer)", color: '#d0ff72'},
+      12:	{classDesc: "Shrub cover, closed-open, deciduous (with or without sparse tree layer)", color: '#eae405'},
+      13:	{classDesc: "Herbaceous cover, closed-open", color: '#d8d79e'},
+      14:	{classDesc: "Sparse herbaceous or sparse shrub cover", color: '#cbcc66'},
+      15:	{classDesc: "Regularly flooded shrub and/or herbaceous cover", color: '#aa66cd'},
+      16:	{classDesc: "Cultivated and managed areas", color: '#f678b5'},
+      17:	{classDesc: "Mosaic: cropland/tree cover/other natural vegetation", color: '#6f448a'},
+      18:	{classDesc: "Mosaic: cropland/shrub and/or herbaceous cover", color: '#de71fe'},
+      19:	{classDesc: "Bare areas", color: '#ffeabd'},
+      20:	{classDesc: "Water bodies (natural and artificial)", color: '#005ce7'},
+      21:	{classDesc: "Snow and ice (natural and artificial)", color: '#bee6ff'},
+      22:	{classDesc: "Artificial surfaces and associated areas", color: '#333'},
+      23:	{classDesc: "No data", color: '#686868'}
+      };
+  var climateZoneClasses = { //colors taken from BasinATLAS Catalog
+      1:	{ClassDesc: "Arctic 1	(A)", color: '#bdffe8'},
+      2:	{ClassDesc: "Arctic 2	(B)", color: '#7af4c9'},
+      3:	{ClassDesc: "Extremely cold and wet 1	(C)", color: '#004da6'},
+      4:	{ClassDesc: "Extremely cold and wet 2	(D)", color: '#0085a8'},
+      5:	{ClassDesc: "Cold and wet	(E)", color: '#7c8df5'},
+      6:	{ClassDesc: "Extremely cold and mesic	(F)", color: '#00724b'},
+      7:	{ClassDesc: "Cold and mesic	(G)", color: '#38a800'},
+      8:	{ClassDesc: "Cool temperate and dry	(H)", color: '#98e500'},
+      9:	{ClassDesc: "Cool temperate and xeric	(I)", color: '#d0ff72'},
+      10:	{ClassDesc: "Cool temperate and moist	(J)", color: '#ae64ce'},
+      11: {ClassDesc: "Warm temperate and mesic	(K)", color: '#cd6598'},
+      12:	{ClassDesc: "Warm temperate and xeric	(L)", color: '#ff7f7d'},
+      13:	{ClassDesc: "Hot and mesic	(M)", color: '#f678b5'},
+      14:	{ClassDesc: "Hot and dry	(N)", color: '#d69dbe'},
+      15:	{ClassDesc: "Hot and arid	(O)", color: '#ffa77f'},
+      16:	{ClassDesc: "Extremely hot and arid	(P)", color: '#ffeabd'},
+      17:	{ClassDesc: "Extremely hot and xeric	(Q)", color: '#ffffbf'},
+      18:	{ClassDesc: "Extremely hot and moist	(R)", color: '#ffbee8'}
+      };
+  var basinGeoSet = new Set (["HYBAS_ID","DIST_SINK","DIST_MAIN","SUB_AREA","UP_AREA","PFAF_ID","ORDER_"]);
+
+  //initial values for expressed attribute and basinLevel
+  var expressed = "glc_pc_u16";
+  var basinLevel = 5;
+
+    //vivid
+  //#E58606,#5D69B1,#52BCA3,#99C945,#CC61B0,#24796C,#DAA51B,#2F8AC4,#764E9F,#ED645A,#CC3A8E,#A5AA99
+  //pastel
+  //#66C5CC,#F6CF71,#F89C74,#DCB0F2,#87C55F,#9EB9F3,#FE88B1,#C9DB74,#8BE0A4,#B497E7,#D3B484,#B3B3B3
+    //temps
+  // #009392,#39b185,#9ccb86,#e9e29c,#eeb479,#e88471,#cf597e
+
 
   //begin script
   window.onload = createMap();
   
-
   //function to create map
   function createMap(){
 
-    map = L.map('map').setView([37.8, -96], 5);
+    //define variables for layers to add to the map
+    var positron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 20
+    });
 
-    var tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-      }).addTo(map);
+      });
+
+    var baseMaps = {
+      "OpenStreetMap": osm,
+      "CartoDB Positron": positron
+    };
+
+    //create map object and add layers
+    map = L.map('map', {
+      zoomControl: false,
+      layers: [osm, positron]
+    }).setView([37.8, -96], 5);
+
+    var zooms = L.control.zoom({position:'topright'}).addTo(map); //moves zoom to right side
+
+    // https://leafletjs.com/examples/layers-control/
+    var layerControl = L.control.layers(baseMaps).addTo(map); //can make other layer groups
 
     getData(map);
 
+    createSequenceControls();
+
   };
 
-  //function to create basemap and other contextual layers
+  //Create new sequence controls
+  function createSequenceControls(){   
+      
+    var SequenceControl = L.Control.extend({
+        options: {position: "topleft",},
 
-  //function to move zooms
+        onAdd: function () {
+            // create the control container div with a particular class name
+            var container = L.DomUtil.create('div', 'sequence-control-container');
 
-  //function to create slider
+            /* idea for later
+            //placeholder for year near slider. will want to mimic createSequenceControl function to create a separate div above slider
+            container.insertAdjacentHTML('beforeend', '<div class="slider-text" style="border: 3px solid red;">2000</p>');
+            */
+
+            //create range input element (slider)
+            container.insertAdjacentHTML('beforeend', '<input class="range-slider" type="range">')
+
+            //add skip buttons
+            container.insertAdjacentHTML('beforeend', '<button class="step" id="reverse" title="Reverse"><img src="img/arrow-left.png"></button>'); 
+            container.insertAdjacentHTML('beforeend', '<button class="step" id="forward" title="Forward"><img src="img/arrow-right.png"></button>'); 
+
+            //disable any mouse event listeners for the container
+            L.DomEvent.disableClickPropagation(container);
+
+            return container;
+        }
+    });
+    
+    map.addControl(new SequenceControl());
+
+    ///////add listeners after adding the control!///////
+    //set slider attributes
+    document.querySelector(".range-slider").max = 8;
+    document.querySelector(".range-slider").min = 0;
+    document.querySelector(".range-slider").value = 2;
+    document.querySelector(".range-slider").step = 1;
+
+    var steps = document.querySelectorAll('.step');
+
+    steps.forEach(function(step){
+        step.addEventListener("click", function(){
+            var index = document.querySelector('.range-slider').value;
+            if (step.id == 'forward'){
+                index++;
+                //if past the last attribute, wrap around to first attribute
+                index = index > 8 ? 0 : index;
+            } else if (step.id == 'reverse'){
+                index--;
+                //if past the first attribute, wrap around to last attribute
+                index = index < 0 ? 8 : index;
+            };
+
+            //update slider
+            document.querySelector('.range-slider').value = index;
+
+            //pass new attribute to update <many things>
+            //updatePropSymbols(attributes[index]);
+        })
+    })
+
+    //input listener for sliderS
+    document.querySelector('.range-slider').addEventListener('input', function(){
+        //get the new index value
+        var index = this.value;
+
+        //pass new attribute to update <many things>
+        //updatePropSymbols(attributes[index]);
+    });
+  }
 
   //function to handle geojson fetch and return
   function getData(map){
     //load the data, then map
-    fetch(basinFilePath[8])
+    fetch(basinFilePath[basinLevel])
       .then(function(response){
         return response.json();
       })
       .then(function(json){
         //functions that use json data are called here
-        var attributes = processData(json);
+        var basinAttributes = getAttributes(json);
+        calcStats(json);
         addLayer(json);
-
-        
       })
   };
 
-  function processData(data){
-    //empty array to hold attributes
+  function getAttributes(data){
+    //empty array to hold attributes of current feature (basinlev02 has less than typical)
     var attributes = [];
-
     //properties of the first feature in the dataset
     var properties = data.features[0].properties;
-
     //push each attribute name into attributes array
     for (var attribute in properties){
             attributes.push(attribute);
     }
-    console.log(attributes);
+    console.log("list of attributes: ",attributes);
     return attributes;
-  };
+    };
+
+    function calcStats(data){
+      for (basin of data.features){
+        var val = basin.properties[expressed];
+        basinVals.push(val);
+      };
+      stats.min = Math.min(...basinVals);
+      stats.max = Math.max(...basinVals);
+    }
 
   //function to consolidate properties for adding data to map
   //parent function to styling function and event handlers
   function addLayer(data){
+
+    //make the d3 color scale generator, once, at layer creation
+    // https://d3js.org/d3-scale-chromatic/sequential
+    var colorScale = d3.scaleQuantile(d3.schemeYlOrRd[5]).domain(basinVals);
+
     var geojson;
     geojson = L.geoJson(data, {
       style: style,
       onEachFeature: onEachFeature
     }).addTo(map);
+
   
     //function to style geojson layer
     function style(data){
+
+      var basinColor =  getColor(data.properties[expressed]);
+
       return {
-        fillColor: getColor(data.properties.ORDER_), //pass property from geojson to color function
-        weight: 0.5,
+        fillColor: basinColor, //pass property from geojson to color function
+        weight: 0.7,
         opacity: 1,
         color: 'white',
-        dashArray: '3',
-        fillOpacity: 0.9
+        //dashArray: '3',
+        fillOpacity: 0.7
       };
     }
   
   
     //function to color map based on attribute
-    function getColor(d){ //compare property against some categorization
-      return d < 1  ? '#084081' :
-             d < 2  ? '#0868ac' :
-             d < 3  ? '#2b8cbe' :
-             d < 4  ? '#4eb3d3' :
-             d < 5  ? '#7bccc4' :
-             d < 6  ? '#a8ddb5' :
-             d < 8  ? '#ccebc5' :
-             d < 9  ? '#e0f3db' :
-                      '#f7fcf0';
+    function getColor(val){ //compare property against some categorization
+      //check if 'expressed' is an attribute where color should be graduated per value or unique value
+      if (expressed == "clz_cl_smj") {
+        return climateZoneClasses[val].color;
+      } else if (expressed == "glc_cl_smj") {
+        return landCoverClasses[val].color;
+      }
+      else {
+        //create d3 color scale generator
+        return colorScale(val);
+      }
     }
 
     //sets events on individual features of layer
@@ -279,8 +395,26 @@
 
     // method that we will use to update the control based on feature properties passed
     info.update = function (props) {
-        this._div.innerHTML = '<h4>Basin Label</h4>' +  (props ?
-            '<b>' + props.HYBAS_ID + '</b>'
+      //get useful description from coded term 'expressed'
+      if (basinGeoSet.has(expressed)==true){
+        //special description build
+        description = expressed
+      }
+      var expressedSplit = expressed.split('_');
+      if (0 <= expressedSplit[2].slice(1) <= 23 || expressedSplit[1] == "cl") {
+        //special description build
+        description = attrDescription[expressedSplit[0]];
+      }
+      else {
+        description = attrDescription[expressedSplit[0]] + " " 
+            + attrUnit[expressedSplit[1]] + " "
+            + attrExtent[expressedSplit[2].slice(0,1)] + " "
+            + attrDimension[expressedSplit[2].slice(1)];
+      }
+      
+
+        this._div.innerHTML = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ?
+            '<b>' + props[expressed] + '</b>'
             : 'Hover over a basin');
     };
 
@@ -289,15 +423,22 @@
     var legend = L.control({position: 'bottomright'});
 
     legend.onAdd = function (map) {
+      //start empty array to hold grades
+      var grades = [];
+      //push stats min and max to grades array
+      grades.push(stats.min,stats.max);
+      //add quantiles of expressed to grades, from colorScale function-part of d3
+      grades = grades.concat(colorScale.quantiles());
+      grades.sort(function(a,b){return a-b}); //reversing this messes up legend, needs formatting
 
-        var div = L.DomUtil.create('div', 'info legend'),
-            grades = [0, 10, 20, 50, 100, 200, 500, 1000],
+        var div = L.DomUtil.create('div', 'info legend'),           
+            grades,
             labels = [];
 
         // loop through our density intervals and generate a label with a colored square for each interval
         for (var i = 0; i < grades.length; i++) {
             div.innerHTML +=
-                '<i style="background:' + getColor(i) + '"></i> ' +
+                '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
                 grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
         }
 
@@ -305,8 +446,7 @@
     };
 
     legend.addTo(map);
-  
-  
+
   };
 
 

@@ -31,3 +31,44 @@ body {
   margin-right: 8px;
   opacity: 0.7;
 }
+.sequence-control-container {
+  display:flex;
+  border: 1px solid rgba(164, 164, 164, 0.5);
+  border-radius: 5px;
+  padding: 4px;
+  background-color: rgb(255, 255, 255, 0.8);
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+.range-slider {  
+  width: auto;
+  margin-left:0.5rem;
+  margin-right:0.5rem;
+  order: 2;
+  cursor: pointer;
+}
+.step {  
+  width: 2.0rem;
+  border: 0px solid #eee;
+  border-radius: 3px;
+  background: #e0e3e6;
+  padding:1px;
+}
+.step:hover {
+  background-color: rgb(215, 233, 239);
+  cursor: pointer;
+}
+.step:active {
+  background-color: rgb(173, 216, 230);
+  cursor: pointer;
+}
+.step img {  
+  width: 98%;
+  height: 98%;
+  padding:1px;
+  }  
+#forward {  
+  order: 3;
+}  
+#reverse {  
+  order: 1;
+}
