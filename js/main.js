@@ -76,9 +76,16 @@
         "ix": "", //Index Value, not a useful unit
         "th": "tonnes per hectare",
         "kh": "kg/hectare per year",
-        "pk": "people per square kilometer",
-        "mk": "meters per square kilometer",
-        "ud": "US dollars"
+        "pk": "people per sq. kilometer",
+        "mk": "meters per sq. kilometer",
+        "ud": "US dollars",
+        "HYBAS_ID": "",
+        "DIST_SINK": "kilometers",
+        "DIST_MAIN": "kilometers",
+        "SUB_AREA": "sq. kilometers",
+        "UP_AREA": "sq. kilometers",
+        "PFAF_ID": "",
+        "ORDER_": ""
       };
   var attrExtent = 
         {"p": "at sub-basin pour point",
@@ -123,38 +130,30 @@
       23:	{classDesc: "No data", color: '#686868'}
       };
   var climateZoneClasses = { //colors taken from BasinATLAS Catalog
-      1:	{ClassDesc: "Arctic 1	(A)", color: '#bdffe8'},
-      2:	{ClassDesc: "Arctic 2	(B)", color: '#7af4c9'},
-      3:	{ClassDesc: "Extremely cold and wet 1	(C)", color: '#004da6'},
-      4:	{ClassDesc: "Extremely cold and wet 2	(D)", color: '#0085a8'},
-      5:	{ClassDesc: "Cold and wet	(E)", color: '#7c8df5'},
-      6:	{ClassDesc: "Extremely cold and mesic	(F)", color: '#00724b'},
-      7:	{ClassDesc: "Cold and mesic	(G)", color: '#38a800'},
-      8:	{ClassDesc: "Cool temperate and dry	(H)", color: '#98e500'},
-      9:	{ClassDesc: "Cool temperate and xeric	(I)", color: '#d0ff72'},
-      10:	{ClassDesc: "Cool temperate and moist	(J)", color: '#ae64ce'},
-      11: {ClassDesc: "Warm temperate and mesic	(K)", color: '#cd6598'},
-      12:	{ClassDesc: "Warm temperate and xeric	(L)", color: '#ff7f7d'},
-      13:	{ClassDesc: "Hot and mesic	(M)", color: '#f678b5'},
-      14:	{ClassDesc: "Hot and dry	(N)", color: '#d69dbe'},
-      15:	{ClassDesc: "Hot and arid	(O)", color: '#ffa77f'},
-      16:	{ClassDesc: "Extremely hot and arid	(P)", color: '#ffeabd'},
-      17:	{ClassDesc: "Extremely hot and xeric	(Q)", color: '#ffffbf'},
-      18:	{ClassDesc: "Extremely hot and moist	(R)", color: '#ffbee8'}
+      1:	{classDesc: "Arctic 1	(A)", color: '#bdffe8'},
+      2:	{classDesc: "Arctic 2	(B)", color: '#7af4c9'},
+      3:	{classDesc: "Extremely cold and wet 1	(C)", color: '#004da6'},
+      4:	{classDesc: "Extremely cold and wet 2	(D)", color: '#0085a8'},
+      5:	{classDesc: "Cold and wet	(E)", color: '#7c8df5'},
+      6:	{classDesc: "Extremely cold and mesic	(F)", color: '#00724b'},
+      7:	{classDesc: "Cold and mesic	(G)", color: '#38a800'},
+      8:	{classDesc: "Cool temperate and dry	(H)", color: '#98e500'},
+      9:	{classDesc: "Cool temperate and xeric	(I)", color: '#d0ff72'},
+      10:	{classDesc: "Cool temperate and moist	(J)", color: '#ae64ce'},
+      11: {classDesc: "Warm temperate and mesic	(K)", color: '#cd6598'},
+      12:	{classDesc: "Warm temperate and xeric	(L)", color: '#ff7f7d'},
+      13:	{classDesc: "Hot and mesic	(M)", color: '#f678b5'},
+      14:	{classDesc: "Hot and dry	(N)", color: '#d69dbe'},
+      15:	{classDesc: "Hot and arid	(O)", color: '#ffa77f'},
+      16:	{classDesc: "Extremely hot and arid	(P)", color: '#ffeabd'},
+      17:	{classDesc: "Extremely hot and xeric	(Q)", color: '#ffffbf'},
+      18:	{classDesc: "Extremely hot and moist	(R)", color: '#ffbee8'}
       };
   var basinGeoSet = new Set (["HYBAS_ID","DIST_SINK","DIST_MAIN","SUB_AREA","UP_AREA","PFAF_ID","ORDER_"]);
 
   //initial values for expressed attribute and basinLevel
-  var expressed = "glc_pc_u16";
-  var basinLevel = 5;
-
-    //vivid
-  //#E58606,#5D69B1,#52BCA3,#99C945,#CC61B0,#24796C,#DAA51B,#2F8AC4,#764E9F,#ED645A,#CC3A8E,#A5AA99
-  //pastel
-  //#66C5CC,#F6CF71,#F89C74,#DCB0F2,#87C55F,#9EB9F3,#FE88B1,#C9DB74,#8BE0A4,#B497E7,#D3B484,#B3B3B3
-    //temps
-  // #009392,#39b185,#9ccb86,#e9e29c,#eeb479,#e88471,#cf597e
-
+  var expressed = "glc_cl_smj";
+  var basinLevel = 4;
 
   //begin script
   window.onload = createMap();
@@ -393,29 +392,55 @@
         return this._div;
     };
 
-    // method that we will use to update the control based on feature properties passed
+    //method to update the control based on feature properties passed
+    //extremely specific to dataset
     info.update = function (props) {
       //get useful description from coded term 'expressed'
-      if (basinGeoSet.has(expressed)==true){
-        //special description build
-        description = expressed
-      }
       var expressedSplit = expressed.split('_');
-      if (0 <= expressedSplit[2].slice(1) <= 23 || expressedSplit[1] == "cl") {
-        //special description build
-        description = attrDescription[expressedSplit[0]];
+      //special description for parameters with "less coded" names
+      if (basinGeoSet.has(expressed)==true){
+        description = attrDescription[expressed];
+        this._div.innerHTML = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ?
+          '<b>' + props[expressed] + ' ' + attrUnit[expressed] + '</b>'
+          : 'Hover over a basin');
       }
-      else {
-        description = attrDescription[expressedSplit[0]] + " " 
-            + attrUnit[expressedSplit[1]] + " "
-            + attrExtent[expressedSplit[2].slice(0,1)] + " "
-            + attrDimension[expressedSplit[2].slice(1)];
+      //special description and label for "Spatial Majority" classes
+      else if (expressedSplit[2] == "smj"){
+        description = attrDescription[expressedSplit[0]]
+        + " class majority <br>"
+        + attrExtent[expressedSplit[2].slice(0,1)];
+
+        if (expressedSplit[0] == "clz"){
+        this._div.innerHTML = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ?
+          '<b>' + climateZoneClasses[props[expressed]].classDesc + '</b>'
+          : 'Hover over a basin');
+        }
+        else if (expressedSplit[0] == "glc"){
+          this._div.innerHTML = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ?
+            '<b>' + landCoverClasses[props[expressed]].classDesc + '</b>'
+            : 'Hover over a basin');
+        }
       }
-      
+      //special description for percent of land cover classes
+      else if (expressedSplit[0] == "glc"){
+        description = attrDescription[expressedSplit[0]] + ' ' 
+        + attrExtent[expressedSplit[2].slice(0,1)] + ': <br>'
+        + landCoverClasses[expressedSplit[2].slice(1)].classDesc;
 
         this._div.innerHTML = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ?
-            '<b>' + props[expressed] + '</b>'
+          '<b>' + props[expressed] + ' percent </b>'
+          : 'Hover over a basin');
+      }
+      //the most 'standard' version
+      else {
+        description = attrDescription[expressedSplit[0]] + '<br>' 
+            + attrExtent[expressedSplit[2].slice(0,1)] + '<br>'
+            + attrDimension[expressedSplit[2].slice(1)];
+
+        this._div.innerHTML = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ?
+            '<b>' + props[expressed] + ' ' + attrUnit[expressedSplit[1]] + '</b>'
             : 'Hover over a basin');
+        }
     };
 
     info.addTo(map);

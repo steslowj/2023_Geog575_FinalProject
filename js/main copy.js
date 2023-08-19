@@ -47,3 +47,45 @@
     unique.sort(function(a,b){return b-a});
     colorScale = chroma.scale('RdYlBu').domain(unique, unique.length);
     console.log(colorScale);
+
+
+
+
+
+
+    info.update = function (props) {
+      //initialize label variable
+      var expressedValue = props[expressed];
+      //get useful description from coded term 'expressed'
+      
+      if (basinGeoSet.has(expressed)==true){
+        //special description build
+        description = expressed
+      }
+      
+      var expressedSplit = expressed.split('_');
+      //special description and label for "Spatial Majority" classes
+      
+      if (expressedSplit[2] == "smj") {
+        description = attrDescription[expressedSplit[0]] + " "
+        + attrExtent[expressedSplit[2].slice(0,1)] + " "
+        + attrDimension[expressedSplit[2].slice(1)];
+        if(expressedSplit[1] = "clz"){
+          expressedValue = landCoverClasses[(props[expressed])];
+        }
+        else if(expressedSplit[1] == "glc"){
+          expressedValue = climateZoneClasses[props[expressed]];
+        }
+      }
+      
+      else {
+        description = attrDescription[expressedSplit[0]] + " " 
+            + attrUnit[expressedSplit[1]] + " "
+            + attrExtent[expressedSplit[2].slice(0,1)] + " "
+            + attrDimension[expressedSplit[2].slice(1)];
+      }
+      
+        this._div.innerHTML = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ?
+            '<b>' + expressedValue + '</b>'
+            : 'Hover over a basin');
+    };
