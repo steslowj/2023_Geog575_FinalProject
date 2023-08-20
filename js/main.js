@@ -411,13 +411,13 @@
         + attrExtent[expressedSplit[2].slice(0,1)];
 
         if (expressedSplit[0] == "clz"){
-        this._div.innerHTML = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ?
-          '<b>' + climateZoneClasses[props[expressed]].classDesc + '</b>'
-          : 'Hover over a basin');
+          this._div.innerHTML = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ?
+            '<b> (' + props[expressed] + ') ' + climateZoneClasses[props[expressed]].classDesc + '</b>'
+            : 'Hover over a basin');
         }
         else if (expressedSplit[0] == "glc"){
           this._div.innerHTML = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ?
-            '<b>' + landCoverClasses[props[expressed]].classDesc + '</b>'
+            '<b> (' + props[expressed] + ') ' + landCoverClasses[props[expressed]].classDesc + '</b>'
             : 'Hover over a basin');
         }
       }
