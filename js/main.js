@@ -153,7 +153,7 @@
 
   //initial values for expressed attribute and basinLevel
   var expressed = "glc_cl_smj";
-  var basinLevel = 4;
+  var basinLevel = 7;
 
   //begin script
   window.onload = createMap();
@@ -162,16 +162,16 @@
   function createMap(){
 
     //define variables for layers to add to the map
+    var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      });
+
     var positron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       subdomains: 'abcd',
       maxZoom: 20
     });
-
-    var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-      });
 
     var baseMaps = {
       "OpenStreetMap": osm,
@@ -181,17 +181,38 @@
     //create map object and add layers
     map = L.map('map', {
       zoomControl: false,
-      layers: [osm, positron]
+      layers: [osm]
     }).setView([37.8, -96], 5);
 
     var zooms = L.control.zoom({position:'topright'}).addTo(map); //moves zoom to right side
 
+    //Plugin to create a button control to reset view to default
+    L.control.resetView({
+      position: "topright",
+      title: "Reset view",
+      latlng: L.latLng([37.8, -96]),
+      zoom: 5,
+    }).addTo(map);
+
     // https://leafletjs.com/examples/layers-control/
     var layerControl = L.control.layers(baseMaps).addTo(map); //can make other layer groups
 
+    //compicated function to bring data to map
     getData(map);
 
+    //function to create the slider for sequencing between basin levels
     createSequenceControls();
+
+    //Leaflet method to add a scale, default is bottom left
+    L.control.scale().addTo(map);
+
+    //Leaflet plugin to add a styled sidepanel
+		const sidepanelLeft = L.control.sidepanel('mySidepanelLeft', {
+			tabsPosition: 'left',
+			startTab: 'tab-1'
+		}).addTo(map);
+
+
 
   };
 
@@ -205,17 +226,18 @@
             // create the control container div with a particular class name
             var container = L.DomUtil.create('div', 'sequence-control-container');
 
-            /* idea for later
+            
             //placeholder for year near slider. will want to mimic createSequenceControl function to create a separate div above slider
-            container.insertAdjacentHTML('beforeend', '<div class="slider-text" style="border: 3px solid red;">2000</p>');
-            */
-
-            //create range input element (slider)
-            container.insertAdjacentHTML('beforeend', '<input class="range-slider" type="range">')
-
-            //add skip buttons
-            container.insertAdjacentHTML('beforeend', '<button class="step" id="reverse" title="Reverse"><img src="img/arrow-left.png"></button>'); 
-            container.insertAdjacentHTML('beforeend', '<button class="step" id="forward" title="Forward"><img src="img/arrow-right.png"></button>'); 
+            container.insertAdjacentHTML('beforeend', '<div class="slider-text" style="border: 2px dashed red;">Basin Level Slider</div>');
+            
+            //create range input element (slider) and buttons in one div, below the slider-text
+            //slider is a DOM object https://www.w3schools.com/jsref/dom_obj_range.asp
+            container.insertAdjacentHTML('beforeend', 
+                '<div>' + 
+                '<button class="step" id="reverse" title="Reverse"><img src="img/arrow-left.png"></button>' +
+                '<input class="range-slider" type="range">' + 
+                '<button class="step" id="forward" title="Forward"><img src="img/arrow-right.png"></button>' +
+                '</div>')
 
             //disable any mouse event listeners for the container
             L.DomEvent.disableClickPropagation(container);

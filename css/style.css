@@ -31,17 +31,20 @@
 }
 .sequence-control-container {
   display:flex;
+  flex-direction: column;
   border: 1px solid rgba(164, 164, 164, 0.5);
   border-radius: 5px;
   padding: 4px;
   background-color: rgb(255, 255, 255, 0.8);
   box-shadow: 0 0 10px rgba(0,0,0,0.2);
 }
+.slider-text {
+  display: flex;
+}
 .range-slider {  
   width: auto;
   margin-left:0.5rem;
   margin-right:0.5rem;
-  order: 2;
   cursor: pointer;
 }
 .step {  
@@ -64,12 +67,7 @@
   height: 98%;
   padding:1px;
   }  
-#forward {  
-  order: 3;
-}  
-#reverse {  
-  order: 1;
-}
+
 
 /*Styling related to webpage*/
 body {
@@ -126,45 +124,52 @@ body {
   }
 }
 
-.sidepanel  {
-  width: 0; /*width defined in js code at bottom of index.html*/
-  position: fixed;
-  height: 80%;
-  top: 80px;
-  left: 0;
-  background-color: #bbb;
-  overflow-x: hidden;
-  transition: 0.5s;
-  padding-top: 60px;
-  z-index: 10000;
+
+
+/*Styling related to sidepanel plugin*/
+.header h1 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.sidepanel a {
-  padding: 8px 8px 8px 32px;
+.header a {
+  font-size: 16px;
+  color: #007399;
   text-decoration: none;
-  font-size: 25px;
-  color: #818181;
-  display: block;
-  transition: 0.3s;
+  margin-left: 24px;
 }
 
-.sidepanel a:hover {
-  color: #f1f1f1;
+.header a:hover {
+  color: #135f79;
+  text-decoration: underline;
 }
 
-.sidepanel .closebtn {
-  position: absolute;
-  top: 10px;
-  color: #000;
-  right: 25px;
-  font-size: 36px;
-  z-index: 10001;
+.header a span {
+  margin-left: 4px;
 }
 
-.openbtn {
-  cursor: pointer;
+.header a svg {
+  vertical-align: middle;
 }
 
-.openbtn:hover {
-  background-color:#444;
+.sidepanel-content {
+  font-size: 1rem;
+}
+
+.sidepanel-content h4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.sidepanel-content a {
+  text-decoration: none;
+  font-size: 1rem;
+  color: #007399;
+  transition: color 0.3s ease-in;
+}
+
+.sidepanel-content a:hover {
+  color: #135f79;
+  text-decoration: underline;
 }
