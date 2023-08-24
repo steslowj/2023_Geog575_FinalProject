@@ -10,6 +10,8 @@
   var map;
   var stats = {};
   var basinVals = [];
+  var legend;
+  var info;
   
   //array for data file paths to use
   var basinFilePath = [
@@ -85,7 +87,7 @@
         "SUB_AREA": "sq. kilometers",
         "UP_AREA": "sq. kilometers",
         "PFAF_ID": "",
-        "ORDER_": ""
+        "ORDER_": "nth order"
       };
   var attrExtent = 
         {"p": "at sub-basin pour point",
@@ -150,10 +152,11 @@
       18:	{classDesc: "Extremely hot and moist	(R)", color: '#ffbee8'}
       };
   var basinGeoSet = new Set (["HYBAS_ID","DIST_SINK","DIST_MAIN","SUB_AREA","UP_AREA","PFAF_ID","ORDER_"]);
+  //Dist_SINK and DIST_MAIN have very similar data, but they are different with smaller sub-basins
 
   //initial values for expressed attribute and basinLevel
-  var expressed = "glc_cl_smj";
-  var basinLevel = 7;
+  var expressed = "ORDER_";
+  var basinLevel = 5;
 
   //begin script
   window.onload = createMap();
@@ -178,7 +181,7 @@
       "CartoDB Positron": positron
     };
 
-    //create map object and add layers
+    //create map object and add initial layers (here it's just one)
     map = L.map('map', {
       zoomControl: false,
       layers: [osm]
@@ -198,7 +201,7 @@
     var layerControl = L.control.layers(baseMaps).addTo(map); //can make other layer groups
 
     //compicated function to bring data to map
-    getData(map);
+    getData(basinLevel);
 
     //function to create the slider for sequencing between basin levels
     createSequenceControls();
@@ -212,13 +215,11 @@
 			startTab: 'tab-1'
 		}).addTo(map);
 
-
-
-  };
+  }
 
   //Create new sequence controls
-  function createSequenceControls(){   
-      
+  function createSequenceControls(){
+    
     var SequenceControl = L.Control.extend({
         options: {position: "topleft",},
 
@@ -226,9 +227,8 @@
             // create the control container div with a particular class name
             var container = L.DomUtil.create('div', 'sequence-control-container');
 
-            
-            //placeholder for year near slider. will want to mimic createSequenceControl function to create a separate div above slider
-            container.insertAdjacentHTML('beforeend', '<div class="slider-text" style="border: 2px dashed red;">Basin Level Slider</div>');
+            //creates a div for a title above the slider
+            container.insertAdjacentHTML('beforeend', '<div class="slider-text" id="slider-text">Basin Level: ' + basinLevel.toString() + '</div>');
             
             //create range input element (slider) and buttons in one div, below the slider-text
             //slider is a DOM object https://www.w3schools.com/jsref/dom_obj_range.asp
@@ -248,11 +248,10 @@
     
     map.addControl(new SequenceControl());
 
-    ///////add listeners after adding the control!///////
     //set slider attributes
     document.querySelector(".range-slider").max = 8;
-    document.querySelector(".range-slider").min = 0;
-    document.querySelector(".range-slider").value = 2;
+    document.querySelector(".range-slider").min = 2;
+    document.querySelector(".range-slider").value = 5; //initial value
     document.querySelector(".range-slider").step = 1;
 
     var steps = document.querySelectorAll('.step');
@@ -263,33 +262,36 @@
             if (step.id == 'forward'){
                 index++;
                 //if past the last attribute, wrap around to first attribute
-                index = index > 8 ? 0 : index;
+                index = index > 8 ? 2 : index;
             } else if (step.id == 'reverse'){
                 index--;
                 //if past the first attribute, wrap around to last attribute
-                index = index < 0 ? 8 : index;
+                index = index < 2 ? 8 : index;
             };
 
             //update slider
             document.querySelector('.range-slider').value = index;
 
-            //pass new attribute to update <many things>
-            //updatePropSymbols(attributes[index]);
+            //pass new attribute to update Basin Level --> changes GeoJSON
+            basinLevel = index;
+            changeBainLevel(index);
         })
     })
 
-    //input listener for sliderS
+    //input listener for sliders
     document.querySelector('.range-slider').addEventListener('input', function(){
+        //pass new attribute to update Basin Level --> changes GeoJSON  
         //get the new index value
         var index = this.value;
-
-        //pass new attribute to update <many things>
-        //updatePropSymbols(attributes[index]);
+        basinLevel = index;
+        changeBainLevel(index);
     });
+
+
   }
 
   //function to handle geojson fetch and return
-  function getData(map){
+  function getData(basinLevel){
     //load the data, then map
     fetch(basinFilePath[basinLevel])
       .then(function(response){
@@ -301,7 +303,7 @@
         calcStats(json);
         addLayer(json);
       })
-  };
+  }
 
   function getAttributes(data){
     //empty array to hold attributes of current feature (basinlev02 has less than typical)
@@ -312,18 +314,18 @@
     for (var attribute in properties){
             attributes.push(attribute);
     }
-    console.log("list of attributes: ",attributes);
+    //console.log("list of attributes: ",attributes);
     return attributes;
-    };
+  }
 
-    function calcStats(data){
-      for (basin of data.features){
-        var val = basin.properties[expressed];
-        basinVals.push(val);
-      };
-      stats.min = Math.min(...basinVals);
-      stats.max = Math.max(...basinVals);
-    }
+  function calcStats(data){
+    for (basin of data.features){
+      var val = basin.properties[expressed];
+      basinVals.push(val);
+    };
+    stats.min = Math.min(...basinVals);
+    stats.max = Math.max(...basinVals);
+  }
 
   //function to consolidate properties for adding data to map
   //parent function to styling function and event handlers
@@ -339,7 +341,7 @@
       onEachFeature: onEachFeature
     }).addTo(map);
 
-  
+
     //function to style geojson layer
     function style(data){
 
@@ -406,7 +408,7 @@
       map.fitBounds(e.target.getBounds());
     }
 
-    var info = L.control();
+    info = L.control();
 
     info.onAdd = function (map) {
         this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
@@ -415,7 +417,7 @@
     };
 
     //method to update the control based on feature properties passed
-    //extremely specific to dataset
+    //extremely specific to dataset, uses many if/else
     info.update = function (props) {
       //get useful description from coded term 'expressed'
       var expressedSplit = expressed.split('_');
@@ -467,8 +469,9 @@
 
     info.addTo(map);
 
-    var legend = L.control({position: 'bottomright'});
+    legend = L.control({position: 'bottomright'});
 
+    //function to create the legend. Finicky/needs formatting
     legend.onAdd = function (map) {
       //start empty array to hold grades
       var grades = [];
@@ -494,7 +497,30 @@
 
     legend.addTo(map);
 
-  };
+  }
+
+  function changeBainLevel(index){
+    console.log('slider current value, after click:',index);
+    console.log('global variable basinLevel:',basinLevel);
+
+    document.getElementById("slider-text").innerHTML = 'Basin Level: ' + index.toString();
+
+    //remove current layer before we switch
+    //this method cycles through layers and removes all but 1 basemap. Might cause errors down the line
+    //can access geoJSON layer by creating a global variable and redefining it under addLayer (not declaring again)
+    var layCount = 0;
+    map.eachLayer(function(layer){
+      if (layCount > 0) {layer.remove()}
+      layCount +=1;
+    });
+
+    map.removeControl(legend);
+    map.removeControl(info);
+    getData(index);
+
+  }
+
+
 
 
 })(); //wraps the initial function

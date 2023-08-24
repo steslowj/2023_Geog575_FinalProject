@@ -40,6 +40,8 @@
 }
 .slider-text {
   display: flex;
+  font-size:large;
+  margin:auto;
 }
 .range-slider {  
   width: auto;
