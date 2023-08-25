@@ -11,12 +11,11 @@
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
         <link rel="stylesheet" href="css/style.css"/>
 
-        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"> <!--Works for SVG not icons?-->
-        <link rel="stylesheet" href="css/L.Control.ResetView.min.css">
-        <link rel="stylesheet" href="css/leaflet-sidepanel.css">
+        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"/> <!--Works for SVG not icons?-->
+        <link rel="stylesheet" href="lib/LeafletPlugins/leaflet-sidepanel.css"/>
+        <link rel="stylesheet" href="lib/LeafletPlugins/L.Control.ResetView.min.css"/>
         
     </head>
-
 
     <body>
       <div class="header">
@@ -24,8 +23,6 @@
         <div class="title">Exploring the Mississippi River Watershed<span class="subtitle"><br>With hydroSHEDS</span></div>
         <div class="map-button">Data Per Basin</div>
       </div>
-
-      
       
       <!-- Side Panel left -->
       <div id="mySidepanelLeft" class="sidepanel" aria-label="side panel" aria-hidden="false">
@@ -49,9 +46,10 @@
               </li>
               <li class="sidepanel-tab">
                 <a href="#" class="sidebar-tab-link" role="tab" data-tab-link="tab-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-file-earmark-bar-graph" viewBox="0 0 16 16">
-                    <path d="M10 13.5a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-6a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v6zm-2.5.5a.5.5 0 0 1-.5-.5v-4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1zm-3 0a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-1z"/>
-                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-clipboard-data" viewBox="0 0 16 16">
+                    <path d="M4 11a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0v-1zm6-4a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0V7zM7 9a1 1 0 0 1 2 0v3a1 1 0 1 1-2 0V9z"/>
+                    <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                    <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
                   </svg>
                 </a>
               </li>
@@ -96,7 +94,6 @@
                   turpis faucibus, placerat sapien quis, varius ligula. Praesent ac magna id tortor ultricies ultricies quis nec quam.</p>
                   <p>other potential icons</p>
                   <h2><i class="bi bi-book"></i></h2>
-                  <h2><i class="bi bi-clipboard-data"></i></h2>
                   <h2><i class="bi bi-key"></i></h2>
                   <p>toggles for data menu?</p>
                   <h2><i class="bi bi-toggle-on"></i></h2>
@@ -112,15 +109,14 @@
                   massa,in interdum arcu commodo ac. Curabitur sit amet cursus ipsum. Donec ut diam orci. Fusce odio diam, laoreet non elit sed, suscipit mollis leo. Fusce
                   non
                   turpis faucibus, placerat sapien quis, varius ligula. Praesent ac magna id tortor ultricies ultricies quis nec quam.</p>
-
               </div>
               <div class="sidepanel-tab-content" data-tab-content="tab-5">
                 <h4>Credits</h4>
                 <p>Created by:</p>
                 <p>Created with:</p>
                 <p>Data Sources... I think this one is all HydroSHEDS</p>
-                <a href="https://github.com/maxwell-ilai/Leaflet.SidePanel" target="_blank">SidePanel Plugin</a>
-                <a href="https://github.com/drustack/Leaflet.ResetView" target="_blank">Reset View Plugin</a>
+                <p><a href="https://github.com/maxwell-ilai/Leaflet.SidePanel" target="_blank">SidePanel Plugin</a></p>
+                <p><a href="https://github.com/drustack/Leaflet.ResetView" target="_blank">ResetView Plugin</a></p>
               </div>
             </div>
           </div>
@@ -131,18 +127,15 @@
       </div>
 
 
-
       <div id="map"></div>
-
-
 
 
       <script src='https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js' integrity='sha512-M7nHCiNUOwFt6Us3r8alutZLm9qMt4s9951uo8jqO4UwJ1hziseL6O3ndFyigx6+LREfZqnhHxYjKRJ8ZQ69DQ==' crossorigin='anonymous'></script>
       <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-      <script type="text/javascript" src="js/leaflet-sidepanel.min.js"></script>
-      <script type="text/javascript" src="js/L.Control.ResetView.min.js"></script>
-
+      <script type="text/javascript" src="lib/topojson.min.js"></script>
+      <script type="text/javascript" src="lib/LeafletPlugins/leaflet-sidepanel.min.js"></script>
+      <script type="text/javascript" src="lib/LeafletPlugins/L.Control.ResetView.min.js"></script>
 
       <script type="text/javascript" src="js/main.js"></script>
     </body>

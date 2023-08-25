@@ -1,8 +1,5 @@
 //javascript code associated with Mississippi River Basins Final Project
 
-//much of this follows https://leafletjs.com/examples/choropleth/
-//and Geog Lab 1
-
 //wrap everything in an anonymous function which is immediately invoked
 (function(){
 
@@ -10,20 +7,24 @@
   var map;
   var stats = {};
   var basinVals = [];
+  var attributes = [];
+  var properties;
   var legend;
   var info;
+  var geojson;
+  var colorScale;
   
   //array for data file paths to use
   var basinFilePath = [
     "data/BasinATLAS_levxx",  //index 0
     "data/BasinATLAS_levxx",
-    "data/BasinATLAS_lev02.geojson",
-    "data/BasinATLAS_lev03.geojson",
-    "data/BasinATLAS_lev04.geojson",
-    "data/BasinATLAS_lev05.geojson",
-    "data/BasinATLAS_lev06.geojson",
-    "data/BasinATLAS_lev07.geojson",
-    "data/BasinATLAS_lev08.geojson" //index 8
+    "data/BasinATLAS_lev02.topojson",
+    "data/BasinATLAS_lev03.topojson",
+    "data/BasinATLAS_lev04.topojson",
+    "data/BasinATLAS_lev05.topojson",
+    "data/BasinATLAS_lev06.topojson",
+    "data/BasinATLAS_lev07.topojson",
+    "data/BasinATLAS_lev08.topojson" //index 8
   ]
 
   //objects to define descriptions, unit, spatial extent, dimension, and land cover & climate classes
@@ -155,7 +156,7 @@
   //Dist_SINK and DIST_MAIN have very similar data, but they are different with smaller sub-basins
 
   //initial values for expressed attribute and basinLevel
-  var expressed = "ORDER_";
+  var expressed = "glc_cl_smj";
   var basinLevel = 5;
 
   //begin script
@@ -214,7 +215,6 @@
 			tabsPosition: 'left',
 			startTab: 'tab-1'
 		}).addTo(map);
-
   }
 
   //Create new sequence controls
@@ -251,7 +251,7 @@
     //set slider attributes
     document.querySelector(".range-slider").max = 8;
     document.querySelector(".range-slider").min = 2;
-    document.querySelector(".range-slider").value = 5; //initial value
+    document.querySelector(".range-slider").value = basinLevel; //initial value
     document.querySelector(".range-slider").step = 1;
 
     var steps = document.querySelectorAll('.step');
@@ -274,7 +274,7 @@
 
             //pass new attribute to update Basin Level --> changes GeoJSON
             basinLevel = index;
-            changeBainLevel(index);
+            changeBasinLevel(index);
         })
     })
 
@@ -284,32 +284,42 @@
         //get the new index value
         var index = this.value;
         basinLevel = index;
-        changeBainLevel(index);
+        changeBasinLevel(index);
     });
-
-
   }
 
   //function to handle geojson fetch and return
   function getData(basinLevel){
-    //load the data, then map
-    fetch(basinFilePath[basinLevel])
-      .then(function(response){
-        return response.json();
-      })
-      .then(function(json){
-        //functions that use json data are called here
-        var basinAttributes = getAttributes(json);
-        calcStats(json);
-        addLayer(json);
-      })
+
+  
+      //use Promise.all to parallelize asynchronous data loading
+      var promises = [d3.json(basinFilePath[basinLevel])];
+      Promise.all(promises).then(callback);
+
+      console.log("after promises?");
+
+      function callback(data){
+        console.log('start of callback function');
+        var json = data[0];
+        console.log(json);
+        
+        //translate from topojson to geojson
+        var currentBasinJson = topojson.feature(json, json.objects["BasinATLAS_lev0"+basinLevel]);
+        console.log(currentBasinJson);
+        //console.log(currentBasinJson); //FeatureCollection object, same as a geojson file would be
+
+        attributes = getAttributes(currentBasinJson);
+        calcStats(currentBasinJson);
+        addLayer(currentBasinJson);
+      }
   }
 
   function getAttributes(data){
-    //empty array to hold attributes of current feature (basinlev02 has less than typical)
-    var attributes = [];
+    //clear array to hold attributes of current feature (basins may have varying totals)
+    attributes = [];
     //properties of the first feature in the dataset
-    var properties = data.features[0].properties;
+    properties = [];
+    properties = data.features[0].properties;
     //push each attribute name into attributes array
     for (var attribute in properties){
             attributes.push(attribute);
@@ -319,6 +329,8 @@
   }
 
   function calcStats(data){
+    basinVals = []; //reset to empty in case this function is after the slider is changed
+    stats = [];
     for (basin of data.features){
       var val = basin.properties[expressed];
       basinVals.push(val);
@@ -333,14 +345,13 @@
 
     //make the d3 color scale generator, once, at layer creation
     // https://d3js.org/d3-scale-chromatic/sequential
-    var colorScale = d3.scaleQuantile(d3.schemeYlOrRd[5]).domain(basinVals);
+    colorScale = d3.scaleQuantile(d3.schemeYlOrRd[5]).domain(basinVals);
 
-    var geojson;
+    //var geojson;
     geojson = L.geoJson(data, {
       style: style,
       onEachFeature: onEachFeature
     }).addTo(map);
-
 
     //function to style geojson layer
     function style(data){
@@ -357,20 +368,6 @@
       };
     }
   
-  
-    //function to color map based on attribute
-    function getColor(val){ //compare property against some categorization
-      //check if 'expressed' is an attribute where color should be graduated per value or unique value
-      if (expressed == "clz_cl_smj") {
-        return climateZoneClasses[val].color;
-      } else if (expressed == "glc_cl_smj") {
-        return landCoverClasses[val].color;
-      }
-      else {
-        //create d3 color scale generator
-        return colorScale(val);
-      }
-    }
 
     //sets events on individual features of layer
     function onEachFeature(feature, layer) {
@@ -403,9 +400,9 @@
         info.update();
     }
 
-    //this one is kind of drastic, want to modify zoom level
+    //zooms and centers to feature, with maximum zoom
     function zoomToFeature(e) {
-      map.fitBounds(e.target.getBounds());
+      map.fitBounds(e.target.getBounds(), {maxZoom: 8});
     }
 
     info = L.control();
@@ -436,12 +433,12 @@
 
         if (expressedSplit[0] == "clz"){
           this._div.innerHTML = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ?
-            '<b> (' + props[expressed] + ') ' + climateZoneClasses[props[expressed]].classDesc + '</b>'
+            '<b>' + props[expressed] + ': ' + climateZoneClasses[props[expressed]].classDesc + '</b>'
             : 'Hover over a basin');
         }
         else if (expressedSplit[0] == "glc"){
           this._div.innerHTML = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ?
-            '<b> (' + props[expressed] + ') ' + landCoverClasses[props[expressed]].classDesc + '</b>'
+            '<b>' + props[expressed] + ': ' + landCoverClasses[props[expressed]].classDesc + '</b>'
             : 'Hover over a basin');
         }
       }
@@ -475,33 +472,57 @@
     legend.onAdd = function (map) {
       //start empty array to hold grades
       var grades = [];
-      //push stats min and max to grades array
-      grades.push(stats.min,stats.max);
-      //add quantiles of expressed to grades, from colorScale function-part of d3
-      grades = grades.concat(colorScale.quantiles());
-      grades.sort(function(a,b){return a-b}); //reversing this messes up legend, needs formatting
+      
+      if (expressed == "clz_cl_smj" || expressed == "glc_cl_smj") {
 
-        var div = L.DomUtil.create('div', 'info legend'),           
-            grades,
-            labels = [];
+        let unique = basinVals.filter((item, i, ar) => ar.indexOf(item) === i);
+        unique.sort(function(a,b){return a-b});
+        grades = unique;
 
-        // loop through our density intervals and generate a label with a colored square for each interval
-        for (var i = 0; i < grades.length; i++) {
-            div.innerHTML +=
-                '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
-                grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+        var div = L.DomUtil.create('div', 'info legend');
+
+        if (expressed == "clz_cl_smj") {
+          // loop through our density intervals and generate a label with a colored square for each interval
+          for (var i = 0; i < grades.length; i++) {
+          div.innerHTML +=
+              '<i style="background:' + getColor(grades[i]) + '"></i> ' +
+              grades[i] +': ' + climateZoneClasses[grades[i]].classDesc + (grades[i + 1] ? '<br>' : '');
+          }
         }
+        else if (expressed == "glc_cl_smj") {
+          // loop through our density intervals and generate a label with a colored square for each interval
+          for (var i = 0; i < grades.length; i++) {
+          div.innerHTML +=
+              '<i style="background:' + getColor(grades[i]) + '"></i> ' +
+              grades[i] +': ' + landCoverClasses[grades[i]].classDesc + (grades[i + 1] ? '<br>' : '');
+          }
+        }
+      }
+      else {
+        //push stats min and max to grades array
+        grades.push(stats.min,stats.max);
+        //add quantiles of expressed to grades, from colorScale function-part of d3
+        grades = grades.concat(colorScale.quantiles());
+        grades.sort(function(a,b){return a-b}); //reversing this messes up legend, needs formatting
 
+          var div = L.DomUtil.create('div', 'info legend');
+
+          // loop through our density intervals and generate a label with a colored square for each interval
+          for (var i = 0; i < grades.length; i++) {
+              div.innerHTML +=
+                  '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+                  grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+          }
+        }
         return div;
     };
 
     legend.addTo(map);
-
+    
+    createDropdown();
   }
 
-  function changeBainLevel(index){
-    console.log('slider current value, after click:',index);
-    console.log('global variable basinLevel:',basinLevel);
+  function changeBasinLevel(index){
 
     document.getElementById("slider-text").innerHTML = 'Basin Level: ' + index.toString();
 
@@ -516,10 +537,63 @@
 
     map.removeControl(legend);
     map.removeControl(info);
-    getData(index);
+    var dropdown = d3.select(".dropdown")
+        .remove();
 
+    getData(index);
   }
 
+  //function to create a dropdown menu for attribute selection
+  function createDropdown(){
+    console.log(attributes);
+    //add select element
+    var dropdown = d3.select(".sequence-control-container")
+        .append("select")
+        .attr("class", "dropdown")
+        .on("change", function(){changeAttribute(this.value)});
+
+    //add initial option
+    var titleOption = dropdown.append("option")
+        .attr("class", "titleOption")
+        .attr("disabled", "true")
+        .text("Select Attribute");
+
+    //add attribute name options
+    var attrOptions = dropdown.selectAll("attrOptions")
+        .data(attributes)
+        .enter()
+        .append("option")
+        .attr("value", function(d){ return d })
+        .text(function(d){ return d });
+  }
+
+  function changeAttribute(newAttribute){
+        //change the expressed attribute
+        expressed = newAttribute;
+        colorScale = d3.scaleQuantile(d3.schemeYlOrRd[5]).domain(basinVals);
+        var basinColor =  getColor(properties[expressed]);
+        console.log(basinColor);
+
+        
+
+        geojson.setStyle({
+          fillColor: basinColor
+          })
+  }
+
+  //function to color map based on attribute
+  function getColor(val){ //compare property against some categorization
+    //check if 'expressed' is an attribute where color should be graduated per value or unique value
+    if (expressed == "clz_cl_smj") {
+      return climateZoneClasses[val].color;
+    } else if (expressed == "glc_cl_smj") {
+      return landCoverClasses[val].color;
+    }
+    else {
+      //create d3 color scale generator
+      return colorScale(val);
+    }
+  }
 
 
 
