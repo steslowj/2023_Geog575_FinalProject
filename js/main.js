@@ -11,7 +11,6 @@
   var properties;
   var legend;
   var info;
-  var geojson;
   var colorScale;
   
   //array for data file paths to use
@@ -156,7 +155,7 @@
   //Dist_SINK and DIST_MAIN have very similar data, but they are different with smaller sub-basins
 
   //initial values for expressed attribute and basinLevel
-  var expressed = "glc_cl_smj";
+  var expressed = "sgr_dk_sav";
   var basinLevel = 5;
 
   //begin script
@@ -164,8 +163,7 @@
   
   //function to create map
   function createMap(){
-
-    //define variables for layers to add to the map
+    //define layers to add to the map or to layer control
     var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -177,20 +175,22 @@
       maxZoom: 20
     });
 
+    //create layer group for styling/organizing layer control
     var baseMaps = {
       "OpenStreetMap": osm,
       "CartoDB Positron": positron
     };
 
-    //create map object and add initial layers (here it's just one)
+    //create map object and add initial layers (here it's just one), remove default zoom
     map = L.map('map', {
       zoomControl: false,
       layers: [osm]
     }).setView([37.8, -96], 5);
 
-    var zooms = L.control.zoom({position:'topright'}).addTo(map); //moves zoom to right side
+    //moves zoom to topright, 1st control placed so 1st at the top
+    var zooms = L.control.zoom({position:'topright'}).addTo(map);
 
-    //Plugin to create a button control to reset view to default
+    //Plugin to create a button control to reset view to default ('home' button), under zooms
     L.control.resetView({
       position: "topright",
       title: "Reset view",
@@ -198,11 +198,8 @@
       zoom: 5,
     }).addTo(map);
 
-    // https://leafletjs.com/examples/layers-control/
-    var layerControl = L.control.layers(baseMaps).addTo(map); //can make other layer groups
-
-    //compicated function to bring data to map
-    getData(basinLevel);
+    //create layer control, can make other layer groups to add here
+    var layerControl = L.control.layers(baseMaps).addTo(map);
 
     //function to create the slider for sequencing between basin levels
     createSequenceControls();
@@ -215,16 +212,18 @@
 			tabsPosition: 'left',
 			startTab: 'tab-1'
 		}).addTo(map);
+
+    //brings data from topojsons to webpage, parent function for many map stylings
+    getData(basinLevel);
   }
 
-  //Create new sequence controls
+  //Create new slider to sequence between basin levels
   function createSequenceControls(){
-    
     var SequenceControl = L.Control.extend({
         options: {position: "topleft",},
 
         onAdd: function () {
-            // create the control container div with a particular class name
+            //create the control container div with a particular class name
             var container = L.DomUtil.create('div', 'sequence-control-container');
 
             //creates a div for a title above the slider
@@ -245,7 +244,7 @@
             return container;
         }
     });
-    
+    //add sequence control to map
     map.addControl(new SequenceControl());
 
     //set slider attributes
@@ -254,8 +253,9 @@
     document.querySelector(".range-slider").value = basinLevel; //initial value
     document.querySelector(".range-slider").step = 1;
 
-    var steps = document.querySelectorAll('.step');
+    var steps = document.querySelectorAll('.step'); //create var to hold selection of step
 
+    //add event listener to step to change slider position and activate changeBasinlevel
     steps.forEach(function(step){
         step.addEventListener("click", function(){
             var index = document.querySelector('.range-slider').value;
@@ -268,19 +268,17 @@
                 //if past the first attribute, wrap around to last attribute
                 index = index < 2 ? 8 : index;
             };
-
             //update slider
             document.querySelector('.range-slider').value = index;
-
-            //pass new attribute to update Basin Level --> changes GeoJSON
+            //pass new attribute to update basinLevel --> changes GeoJSON
             basinLevel = index;
             changeBasinLevel(index);
         })
     })
 
-    //input listener for sliders
+    //input listener for slider
     document.querySelector('.range-slider').addEventListener('input', function(){
-        //pass new attribute to update Basin Level --> changes GeoJSON  
+        //pass new attribute to update basinLevel --> changes GeoJSON  
         //get the new index value
         var index = this.value;
         basinLevel = index;
@@ -290,24 +288,18 @@
 
   //function to handle geojson fetch and return
   function getData(basinLevel){
-
-  
       //use Promise.all to parallelize asynchronous data loading
       var promises = [d3.json(basinFilePath[basinLevel])];
       Promise.all(promises).then(callback);
 
-      console.log("after promises?");
-
       function callback(data){
-        console.log('start of callback function');
-        var json = data[0];
-        console.log(json);
+        var json = data[0]; //choosing to only load one topojson at a time
         
-        //translate from topojson to geojson
+        //translate from topojson to geojson using parameter based on basinLevel (from topojson.min.js)
         var currentBasinJson = topojson.feature(json, json.objects["BasinATLAS_lev0"+basinLevel]);
-        console.log(currentBasinJson);
         //console.log(currentBasinJson); //FeatureCollection object, same as a geojson file would be
 
+        //functions that need geojson data need to be called within callback
         attributes = getAttributes(currentBasinJson);
         calcStats(currentBasinJson);
         addLayer(currentBasinJson);
@@ -328,13 +320,15 @@
     return attributes;
   }
 
+  //either: want to store values for every basin for every attribute for one geojson, so vals are available at attribute change
+  //or: store values for every basin for one attribute for one geojson and call calcStats at attribute change
   function calcStats(data){
     basinVals = []; //reset to empty in case this function is after the slider is changed
     stats = [];
-    for (basin of data.features){
-      var val = basin.properties[expressed];
-      basinVals.push(val);
-    };
+      for (basin of data.features){
+        var val = basin.properties[expressed];
+        basinVals.push(val);
+      };
     stats.min = Math.min(...basinVals);
     stats.max = Math.max(...basinVals);
   }
@@ -342,12 +336,11 @@
   //function to consolidate properties for adding data to map
   //parent function to styling function and event handlers
   function addLayer(data){
-
-    //make the d3 color scale generator, once, at layer creation
+    //make the d3 color scale generator at layer creation
     // https://d3js.org/d3-scale-chromatic/sequential
     colorScale = d3.scaleQuantile(d3.schemeYlOrRd[5]).domain(basinVals);
 
-    //var geojson;
+    //create layer for geojson data, style each feature, add to map
     geojson = L.geoJson(data, {
       style: style,
       onEachFeature: onEachFeature
@@ -355,11 +348,10 @@
 
     //function to style geojson layer
     function style(data){
-
       var basinColor =  getColor(data.properties[expressed]);
 
       return {
-        fillColor: basinColor, //pass property from geojson to color function
+        fillColor: basinColor,
         weight: 0.7,
         opacity: 1,
         color: 'white',
@@ -367,7 +359,6 @@
         fillOpacity: 0.7
       };
     }
-  
 
     //sets events on individual features of layer
     function onEachFeature(feature, layer) {
@@ -396,7 +387,7 @@
     }
       //resets highlight
       function resetHighlight(e) {
-        geojson.resetStyle(e.target);
+        geojson.resetStyle(e.target); //geojson variable defined in parent function
         info.update();
     }
 
@@ -405,6 +396,7 @@
       map.fitBounds(e.target.getBounds(), {maxZoom: 8});
     }
 
+    //create new control to present attribute info to user on hover
     info = L.control();
 
     info.onAdd = function (map) {
@@ -466,15 +458,19 @@
 
     info.addTo(map);
 
-    legend = L.control({position: 'bottomright'});
+    setLegend();            //function to set up the legend based on current attributes
+    createDropdown(data);   //function to create dropdown which allows user to change attributes
+  }
 
+  function setLegend(){
+    legend = L.control({position: 'bottomright'});
     //function to create the legend. Finicky/needs formatting
     legend.onAdd = function (map) {
-      //start empty array to hold grades
+      //start empty array to hold grades of legend
       var grades = [];
-      
-      if (expressed == "clz_cl_smj" || expressed == "glc_cl_smj") {
 
+      //special legend styling for attributes that show class (non-numeric data)
+      if (expressed == "clz_cl_smj" || expressed == "glc_cl_smj") {
         let unique = basinVals.filter((item, i, ar) => ar.indexOf(item) === i);
         unique.sort(function(a,b){return a-b});
         grades = unique;
@@ -498,6 +494,7 @@
           }
         }
       }
+      //more 'standard' legend for the rest of the attributes
       else {
         //push stats min and max to grades array
         grades.push(stats.min,stats.max);
@@ -515,15 +512,36 @@
           }
         }
         return div;
-    };
-
+      };
     legend.addTo(map);
-    
-    createDropdown();
   }
 
-  function changeBasinLevel(index){
+  //function to create a dropdown menu for attribute selection
+  function createDropdown(data){
+    //add select element
+    var dropdown = d3.select(".sequence-control-container")
+        .append("select")
+        .attr("class", "dropdown")
+        .on("change", function(){changeAttribute(this.value,data)}); //function to restyle map, legend
 
+    //add initial option
+    var titleOption = dropdown
+        .append("option")
+        .attr("class", "titleOption")
+        .attr("disabled", "true")
+        .text("Select Attribute");
+
+    //add attribute name options
+    var attrOptions = dropdown
+        .selectAll("attrOptions")
+        .data(attributes)
+        .enter()
+        .append("option")
+        .attr("value", function(d){ return d })
+        .text(function(d){ return d });
+  }
+  
+  function changeBasinLevel(index){
     document.getElementById("slider-text").innerHTML = 'Basin Level: ' + index.toString();
 
     //remove current layer before we switch
@@ -535,50 +553,40 @@
       layCount +=1;
     });
 
+    //remove legend, info, dropdown
     map.removeControl(legend);
     map.removeControl(info);
     var dropdown = d3.select(".dropdown")
         .remove();
 
+    //triggers new load of topojson for basin of "index" level, which creates new: layer, legend, info, dropdown
     getData(index);
   }
 
-  //function to create a dropdown menu for attribute selection
-  function createDropdown(){
-    console.log(attributes);
-    //add select element
-    var dropdown = d3.select(".sequence-control-container")
-        .append("select")
-        .attr("class", "dropdown")
-        .on("change", function(){changeAttribute(this.value)});
-
-    //add initial option
-    var titleOption = dropdown.append("option")
-        .attr("class", "titleOption")
-        .attr("disabled", "true")
-        .text("Select Attribute");
-
-    //add attribute name options
-    var attrOptions = dropdown.selectAll("attrOptions")
-        .data(attributes)
-        .enter()
-        .append("option")
-        .attr("value", function(d){ return d })
-        .text(function(d){ return d });
-  }
-
-  function changeAttribute(newAttribute){
+  //function to restyle the layer based on new attribute data, also updates the legend and info
+  function changeAttribute(newAttribute, data){
         //change the expressed attribute
         expressed = newAttribute;
+        //pass current geojson data to calcstats to update basinVals for new attribute
+        calcStats(data);
+        //use updated basinVals to update colorScale which is used in getColor
         colorScale = d3.scaleQuantile(d3.schemeYlOrRd[5]).domain(basinVals);
-        var basinColor =  getColor(properties[expressed]);
-        console.log(basinColor);
 
-        
+        //search for layer with features to update style of basin layer
+        map.eachLayer(function(layer){
+          if (layer.feature){
+            layer.setStyle({
+              fillColor: getColor(layer.feature.properties[expressed])
+            });
+          }
+        });
 
-        geojson.setStyle({
-          fillColor: basinColor
-          })
+        //remove legend and set legend with new attribute and basinVals
+        map.removeControl(legend);
+        setLegend();
+
+        //update the info control with new attribute info
+        info.update(data.properties);
   }
 
   //function to color map based on attribute
@@ -594,7 +602,6 @@
       return colorScale(val);
     }
   }
-
 
 
 })(); //wraps the initial function
