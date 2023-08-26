@@ -12,11 +12,12 @@
   var legend;
   var info;
   var colorScale;
+  var breakPoints;
   
   //array for data file paths to use
-  var basinFilePath = [
+  const basinFilePath = [
     "data/BasinATLAS_levxx",  //index 0
-    "data/BasinATLAS_levxx",
+    "data/BasinATLAS_lev01.topojson",
     "data/BasinATLAS_lev02.topojson",
     "data/BasinATLAS_lev03.topojson",
     "data/BasinATLAS_lev04.topojson",
@@ -27,8 +28,8 @@
   ]
 
   //objects to define descriptions, unit, spatial extent, dimension, and land cover & climate classes
-  var attrDescription = 
-        {"HYBAS_ID": "HydroBASIN ID",
+  const attrDescription = {
+        "HYBAS_ID": "HydroBASIN ID",
         "DIST_SINK": "Distance from polygon outlet to next downstream sink",
         "DIST_MAIN": "Distance from polygon outlet to most downstream sink",
         "SUB_AREA": "Area of sub-basin",
@@ -48,12 +49,12 @@
         "aet": "Actual Evapotranspiration",
         "cmi": "Climate Moisture Index",
         "glc": "Land cover",
-        "wet": "Wetland",
-        "for": "Forest",
-        "crp": "Cropland",
-        "pst": "Pasture",
-        "ire": "Irrigated",
-        "pac": "Protected Area",
+        "wet": "Wetland Extent",
+        "for": "Forest Extent",
+        "crp": "Cropland Extent",
+        "pst": "Pasture Extent",
+        "ire": "Irrigated Area Extent",
+        "pac": "Protected Area Extent",
         "cly": "Clay fraction in soil",
         "slt": "Silt fraction in soil",
         "snd": "Sand fraction in soil",
@@ -63,9 +64,9 @@
         "ppd": "Population density",
         "urb": "Urban extent",
         "rdd": "Road density",
-        "gpd": "Gross Domestic Product"
+        "gdp": "Gross Domestic Product"
       }
-  var attrUnit = 
+  const attrUnit = 
         {"m3": "cubic meters per second",
         "mm": "millimeters",
         "pc": "percent",
@@ -89,12 +90,12 @@
         "PFAF_ID": "",
         "ORDER_": "nth order"
       };
-  var attrExtent = 
+  const attrExtent = 
         {"p": "at sub-basin pour point",
         "s": "per sub-basin",
         "u": "in total watershed of sub-basin pour point"
       };
-  var attrDimension = 
+  const attrDimension = 
         {"yr": "annual average",
         "mn": "annual minimum",
         "mx": "annual maximum",
@@ -106,7 +107,7 @@
         "g2": "25-50% wetland",
         "su": "sum"
       };
-  var landCoverClasses = { //colors taken from BasinATLAS Catalog
+  const landCoverClasses = { //colors taken from BasinATLAS Catalog
       1:	{classDesc: "Tree cover, broadleaved, evergreen", color:"#277300"},
       2:	{classDesc: "Tree cover, broadleaved, deciduous, closed", color: '#38a800'},
       3:	{classDesc: "Tree cover, broadleaved, deciduous, open", color: '#6fa900'},
@@ -117,8 +118,8 @@
       8:	{classDesc: "Tree cover, regularly flooded, saline, (daily variation)", color: '#436584'},
       9:	{classDesc: "Mosaic: tree cover/other natural vegetation", color: '#a9a800'},
       10:	{classDesc: "Tree cover, burnt", color: '#8a4444'},
-      11:	{classDesc: "Shrub cover, closed-open, evergreen (with or without sparse tree layer)", color: '#d0ff72'},
-      12:	{classDesc: "Shrub cover, closed-open, deciduous (with or without sparse tree layer)", color: '#eae405'},
+      11:	{classDesc: "Shrub cover, closed-open, evergreen", color: '#d0ff72'},
+      12:	{classDesc: "Shrub cover, closed-open, deciduous", color: '#eae405'},
       13:	{classDesc: "Herbaceous cover, closed-open", color: '#d8d79e'},
       14:	{classDesc: "Sparse herbaceous or sparse shrub cover", color: '#cbcc66'},
       15:	{classDesc: "Regularly flooded shrub and/or herbaceous cover", color: '#aa66cd'},
@@ -131,7 +132,7 @@
       22:	{classDesc: "Artificial surfaces and associated areas", color: '#333'},
       23:	{classDesc: "No data", color: '#686868'}
       };
-  var climateZoneClasses = { //colors taken from BasinATLAS Catalog
+  const climateZoneClasses = { //colors taken from BasinATLAS Catalog
       1:	{classDesc: "Arctic 1	(A)", color: '#bdffe8'},
       2:	{classDesc: "Arctic 2	(B)", color: '#7af4c9'},
       3:	{classDesc: "Extremely cold and wet 1	(C)", color: '#004da6'},
@@ -151,7 +152,7 @@
       17:	{classDesc: "Extremely hot and xeric	(Q)", color: '#ffffbf'},
       18:	{classDesc: "Extremely hot and moist	(R)", color: '#ffbee8'}
       };
-  var basinGeoSet = new Set (["HYBAS_ID","DIST_SINK","DIST_MAIN","SUB_AREA","UP_AREA","PFAF_ID","ORDER_"]);
+  const basinGeoSet = new Set (["HYBAS_ID","DIST_SINK","DIST_MAIN","SUB_AREA","UP_AREA","PFAF_ID","ORDER_"]);
   //Dist_SINK and DIST_MAIN have very similar data, but they are different with smaller sub-basins
 
   //initial values for expressed attribute and basinLevel
@@ -184,7 +185,8 @@
     //create map object and add initial layers (here it's just one), remove default zoom
     map = L.map('map', {
       zoomControl: false,
-      layers: [osm]
+      layers: [osm],
+      worldCopyJump: true
     }).setView([37.8, -96], 5);
 
     //moves zoom to topright, 1st control placed so 1st at the top
@@ -249,7 +251,7 @@
 
     //set slider attributes
     document.querySelector(".range-slider").max = 8;
-    document.querySelector(".range-slider").min = 2;
+    document.querySelector(".range-slider").min = 1;
     document.querySelector(".range-slider").value = basinLevel; //initial value
     document.querySelector(".range-slider").step = 1;
 
@@ -262,11 +264,11 @@
             if (step.id == 'forward'){
                 index++;
                 //if past the last attribute, wrap around to first attribute
-                index = index > 8 ? 2 : index;
+                index = index > 8 ? 1 : index;
             } else if (step.id == 'reverse'){
                 index--;
                 //if past the first attribute, wrap around to last attribute
-                index = index < 2 ? 8 : index;
+                index = index < 1 ? 8 : index;
             };
             //update slider
             document.querySelector('.range-slider').value = index;
@@ -296,12 +298,14 @@
         var json = data[0]; //choosing to only load one topojson at a time
         
         //translate from topojson to geojson using parameter based on basinLevel (from topojson.min.js)
-        var currentBasinJson = topojson.feature(json, json.objects["BasinATLAS_lev0"+basinLevel]);
+        //special object name for basinLevel 1 because it was simplified differently
+        if (basinLevel == 1) {var currentBasinJson = topojson.feature(json, json.objects["BasinATLAS_v10_lev02"]);}
+        else {var currentBasinJson = topojson.feature(json, json.objects["BasinATLAS_lev0"+basinLevel]);}
         //console.log(currentBasinJson); //FeatureCollection object, same as a geojson file would be
 
         //functions that need geojson data need to be called within callback
         attributes = getAttributes(currentBasinJson);
-        calcStats(currentBasinJson);
+        calcStatsAndColorScale(currentBasinJson);
         addLayer(currentBasinJson);
       }
   }
@@ -322,7 +326,7 @@
 
   //either: want to store values for every basin for every attribute for one geojson, so vals are available at attribute change
   //or: store values for every basin for one attribute for one geojson and call calcStats at attribute change
-  function calcStats(data){
+  function calcStatsAndColorScale(data){
     basinVals = []; //reset to empty in case this function is after the slider is changed
     stats = [];
       for (basin of data.features){
@@ -331,15 +335,38 @@
       };
     stats.min = Math.min(...basinVals);
     stats.max = Math.max(...basinVals);
+
+    //set up color scale with N color classes, N+1 colors and the lightest removed
+    var colors = [];
+    for (var i = 1; i < 6; i++){
+      colors.push(d3.schemePuBuGn[6][i]);
+    }
+
+    if (basinLevel > 3){
+      colorScale = d3.scaleThreshold().range(colors);
+      //cluster data using ckmeans clustering algorithm to create natural breaks
+      var clusters = ss.ckmeans(basinVals,5);
+      //reset domain array to cluster minimums
+      breakPoints = clusters.map(function(d){
+        return d3.min(d);
+      })
+      //remove first value from domain array to create class breakpoints
+      var breakPointsDomain = breakPoints;
+      breakPointsDomain.shift();
+      //assign array of last 4 cluster minimums as domain
+      colorScale.domain(breakPointsDomain);
+    } else if (basinLevel > 2){
+      basinVals.sort(function(a,b){return a - b});
+      colorScale = d3.scaleLinear().range(["#a6bddb","#016c59"]).domain([stats.min,stats.max]);
+      breakPoints = basinVals;
+      breakPoints.reverse().pop();
+    } else {breakPoints = [];}
+    
   }
 
   //function to consolidate properties for adding data to map
   //parent function to styling function and event handlers
   function addLayer(data){
-    //make the d3 color scale generator at layer creation
-    // https://d3js.org/d3-scale-chromatic/sequential
-    colorScale = d3.scaleQuantile(d3.schemeYlOrRd[5]).domain(basinVals);
-
     //create layer for geojson data, style each feature, add to map
     geojson = L.geoJson(data, {
       style: style,
@@ -419,7 +446,7 @@
       }
       //special description and label for "Spatial Majority" classes
       else if (expressedSplit[2] == "smj"){
-        description = attrDescription[expressedSplit[0]]
+        description = '<h2>' + attrDescription[expressedSplit[0]] + '</h2>'
         + " class majority <br>"
         + attrExtent[expressedSplit[2].slice(0,1)];
 
@@ -436,9 +463,9 @@
       }
       //special description for percent of land cover classes
       else if (expressedSplit[0] == "glc"){
-        description = attrDescription[expressedSplit[0]] + ' ' 
-        + attrExtent[expressedSplit[2].slice(0,1)] + ': <br>'
-        + landCoverClasses[expressedSplit[2].slice(1)].classDesc;
+        description = '<h2>' + attrDescription[expressedSplit[0]] + '</h2>'+ ' ' 
+        + attrExtent[expressedSplit[2].slice(0,1)] + ': <h3>'
+        + landCoverClasses[parseInt(expressedSplit[2].slice(1))].classDesc + '</h3>';
 
         this._div.innerHTML = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ?
           '<b>' + props[expressed] + ' percent </b>'
@@ -446,7 +473,7 @@
       }
       //the most 'standard' version
       else {
-        description = attrDescription[expressedSplit[0]] + '<br>' 
+        description = '<h2>' + attrDescription[expressedSplit[0]] + '</h2>' 
             + attrExtent[expressedSplit[2].slice(0,1)] + '<br>'
             + attrDimension[expressedSplit[2].slice(1)];
 
@@ -468,7 +495,14 @@
     legend.onAdd = function (map) {
       //start empty array to hold grades of legend
       var grades = [];
-
+      
+      
+      if (basinLevel == 1) {
+        var div = L.DomUtil.create('div', 'info legend');
+        div.innerHTML += 
+        '<i style="background:' + getColor(grades[i]) + '"></i> ' +
+        grades[i] +': ' + '' + (grades[i + 1] ? '<br>' : '');
+      } 
       //special legend styling for attributes that show class (non-numeric data)
       if (expressed == "clz_cl_smj" || expressed == "glc_cl_smj") {
         let unique = basinVals.filter((item, i, ar) => ar.indexOf(item) === i);
@@ -497,9 +531,8 @@
       //more 'standard' legend for the rest of the attributes
       else {
         //push stats min and max to grades array
-        grades.push(stats.min,stats.max);
-        //add quantiles of expressed to grades, from colorScale function-part of d3
-        grades = grades.concat(colorScale.quantiles());
+        grades.push(stats.min);
+        grades = grades.concat(breakPoints);
         grades.sort(function(a,b){return a-b}); //reversing this messes up legend, needs formatting
 
           var div = L.DomUtil.create('div', 'info legend');
@@ -518,6 +551,7 @@
 
   //function to create a dropdown menu for attribute selection
   function createDropdown(data){
+    
     //add select element
     var dropdown = d3.select(".sequence-control-container")
         .append("select")
@@ -529,7 +563,7 @@
         .append("option")
         .attr("class", "titleOption")
         .attr("disabled", "true")
-        .text("Select Attribute");
+        .text(expressed);
 
     //add attribute name options
     var attrOptions = dropdown
@@ -568,9 +602,7 @@
         //change the expressed attribute
         expressed = newAttribute;
         //pass current geojson data to calcstats to update basinVals for new attribute
-        calcStats(data);
-        //use updated basinVals to update colorScale which is used in getColor
-        colorScale = d3.scaleQuantile(d3.schemeYlOrRd[5]).domain(basinVals);
+        calcStatsAndColorScale(data);
 
         //search for layer with features to update style of basin layer
         map.eachLayer(function(layer){
@@ -592,14 +624,28 @@
   //function to color map based on attribute
   function getColor(val){ //compare property against some categorization
     //check if 'expressed' is an attribute where color should be graduated per value or unique value
-    if (expressed == "clz_cl_smj") {
-      return climateZoneClasses[val].color;
-    } else if (expressed == "glc_cl_smj") {
-      return landCoverClasses[val].color;
+    var varColor;
+    try{
+        if(basinLevel == 1) {
+          varColor = "#016c59";
+        } else if (expressed == "clz_cl_smj") {
+          varColor = climateZoneClasses[val].color;
+        } else if (expressed == "glc_cl_smj") {
+          varColor = landCoverClasses[val].color;
+        }
+        else if (basinLevel == 2){
+          varColor = "#67a9cf";
+        } else {
+          //use d3 color scale generator
+          varColor = colorScale(val);
+        }
     }
-    else {
-      //create d3 color scale generator
-      return colorScale(val);
+    catch(err){
+      console.log(err.name);
+      varColor = "#333333";   //if there is an error, set color as grey
+    }
+    finally{
+      return varColor;        //return appropriate color with or without error
     }
   }
 

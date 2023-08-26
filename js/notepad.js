@@ -98,6 +98,47 @@
 
 
 
+    //code to create an array combining attributes (array) with descriptions of attributes. buggy with climate zone/land cover classes
+    var dropAttributes = [];
+
+    for (var i = 0; i < attributes.length; i++) {
+      var attr = attributes[i];
+      //get useful description from coded term 'expressed'
+      var dropText = "";
+      
+      //special description for parameters with "less coded" names
+      if (basinGeoSet.has(attr)==true){
+        dropText = attr + ': ' + attrDescription[attr] ;
+      }
+      else {
+        var attrSplit = attr.split('_');
+      
+        //special description and label for "Spatial Majority" classes
+        if (attrSplit[2] == "smj"){
+          dropText = attr + ': ' + attrDescription[attrSplit[0]]
+          + " class majority " + attrExtent[attrSplit[2].slice(0,1)];
+        }
+        //special description for percent of land cover classes
+        else if (attrSplit[0] == "glc"){
+          dropText = attr + ': ' + attrDescription[attrSplit[0]] + ' ' 
+          + attrExtent[attrSplit[2].slice(0,1)] + ': '
+          + landCoverClasses[attrSplit[2].slice(1)].classDesc;
+        }
+        //the most 'standard' version
+        else {
+          dropText = attr + ': ' + attrDescription[attrSplit[0]] + ' ' 
+              + attrExtent[attrSplit[2].slice(0,1)] + ' '
+              + attrDimension[attrSplit[2].slice(1)];
+        }
+      }
+      dropAttributes.push(dropText);
+    }
+    //console.log(dropAttributes);
+
+
+
+
+
 
 
 

@@ -14,6 +14,15 @@
   box-shadow: 0 0 15px rgba(0,0,0,0.2);
   border-radius: 5px;
 }
+.info h2 {
+  font-size: 24px;
+  line-height: 26px;
+  margin-bottom: 0.3rem;
+}
+.info h3 {
+  margin: 5px 0 5px;
+  color: #777;
+}
 .info h4 {
   margin: 0 0 5px;
   color: #777;
@@ -48,6 +57,13 @@
   margin-left:0.5rem;
   margin-right:0.5rem;
   cursor: pointer;
+}
+/*when the screen is 500px wide or less, hide slider */
+@media screen and (max-width: 500px) {
+  .range-slider {
+    display: none;
+    width:200px;
+  }
 }
 .step {  
   width: 2.0rem;
