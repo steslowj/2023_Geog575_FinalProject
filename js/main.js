@@ -181,10 +181,22 @@
       maxZoom: 20
     });
 
+    var USGS_USTopo = L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 20,
+      attribution: 'Tiles courtesy of the <a href="https://usgs.gov/">U.S. Geological Survey</a>'
+    });
+
+    var USGS_USImagery = L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 20,
+      attribution: 'Tiles courtesy of the <a href="https://usgs.gov/">U.S. Geological Survey</a>'
+    });
+
     //create layer group for styling/organizing layer control
     var baseMaps = {
       "OpenStreetMap": osm,
-      "CartoDB Positron": positron
+      "CartoDB Positron": positron,
+      "USGS Topography": USGS_USTopo,
+      "USGS Imagery": USGS_USImagery
     };
 
     //create map object and add initial layers (here it's just one), remove default zoom
