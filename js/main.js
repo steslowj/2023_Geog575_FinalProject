@@ -563,7 +563,7 @@
       size: [300,110],
       minSize: [300,100],
       maxSize: [800,800],
-      anchor:[140,20],
+      anchor:[110,20],
       position: "topleft",
       initOpen: true
       })
@@ -573,16 +573,30 @@
       dialog.showClose();
       dialog.showResize();
 
+      document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-on'></i>";
+      
+      var closeDialog = document.querySelector(".leaflet-control-dialog-close")
+      closeDialog.addEventListener("click", function(){
+        document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-off'></i>";  
+      });
+      
       var basinDataButton = document.querySelector(".map-button"); //create var to hold selection
       basinDataButton.addEventListener("click", function(){
-        dialog.open();
-        dialog.showClose();
-        dialog.showResize();
+        if (document.querySelector(".leaflet-control-dialog").style.visibility === "hidden"){
+          dialog.open();
+          dialog.showClose();
+          dialog.showResize();
+          dialog.setLocation([110,20]);
+          document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-on'></i>";
+        } else {
+          dialog.close();
+          document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-off'></i>";
+        }
       });
 
       var resetViewButton = document.querySelector(".leaflet-control-resetview");
       resetViewButton.addEventListener("click", function(){
-        dialog.setLocation([140,20]);
+        dialog.setLocation([110,20]);
       });
 
 
