@@ -93,7 +93,7 @@
   const attrExtent = 
         {"p": "at sub-basin pour point",
         "s": "per sub-basin",
-        "u": "in total watershed of sub-basin pour point"
+        "u": "above sub-basin" //"in total watershed of sub-basin pour point"
       };
   const attrDimension = 
         {"yr": "annual average",
@@ -436,9 +436,16 @@
     //extremely specific to dataset, uses many if/else
     info.update = function (props) {
       //get useful description from coded term 'expressed'
+      var description = "";
       var expressedSplit = expressed.split('_');
       //special description for parameters with "less coded" names
-      if (basinGeoSet.has(expressed)==true){
+      if (basinLevel == 1){
+        try {description = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ? '<b>' + props[expressed] + '</b>'
+          : 'Hover over a basin')
+        } catch {description = ""}
+        this._div.innerHTML = '<p>Basin Level 1 is the entire ground surface, undivided. This map shows how hydroSHEDS divides Level 1 into Level 2 watersheds around the world. Watersheds on this Basin Level have minimal attributes.<p>' + description;
+      }
+      else if (basinGeoSet.has(expressed)==true){
         description = attrDescription[expressed];
         this._div.innerHTML = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ?
           '<b>' + props[expressed] + ' ' + attrUnit[expressed] + '</b>'
@@ -496,7 +503,6 @@
       //start empty array to hold grades of legend
       var grades = [];
       
-      
       if (basinLevel == 1) {
         var div = L.DomUtil.create('div', 'info legend');
         div.innerHTML += 
@@ -551,6 +557,42 @@
 
   //function to create a dropdown menu for attribute selection
   function createDropdown(data){
+
+    //code to create an array combining attributes (array) with descriptions of attributes. buggy with climate zone/land cover classes
+    var dropAttributes = [];
+
+    for (var i = 0; i < attributes.length; i++) {
+      var attr = attributes[i];
+      //get useful description from coded term 'expressed'
+      var dropText = "";
+      
+      //special description for parameters with "less coded" names
+      if (basinGeoSet.has(attr)==true){
+        dropText = attr + ': ' + attrDescription[attr] ;
+      }
+      else {
+        var attrSplit = attr.split('_');
+      
+        //special description and label for "Spatial Majority" classes
+        if (attrSplit[2] == "smj"){
+          dropText = attr + ': ' + attrDescription[attrSplit[0]]
+          + " class majority " + attrExtent[attrSplit[2].slice(0,1)];
+        }
+        //special description for percent of land cover classes
+        else if (attrSplit[0] == "glc"){
+          dropText = attr + ': ' + attrDescription[attrSplit[0]] + ' ' 
+          + attrExtent[attrSplit[2].slice(0,1)] + ': '
+          + landCoverClasses[parseInt(attrSplit[2].slice(1))].classDesc;
+        }
+        //the most 'standard' version
+        else {
+          dropText = attr + ': ' + attrDescription[attrSplit[0]] + ' ' 
+              + attrExtent[attrSplit[2].slice(0,1)] + ' '
+              + attrDimension[attrSplit[2].slice(1)];
+        }
+      }
+      dropAttributes.push(dropText);
+    }
     
     //add select element
     var dropdown = d3.select(".sequence-control-container")
@@ -563,21 +605,20 @@
         .append("option")
         .attr("class", "titleOption")
         .attr("disabled", "true")
-        .text(expressed);
+        .text("Select attribute");
 
     //add attribute name options
     var attrOptions = dropdown
         .selectAll("attrOptions")
-        .data(attributes)
+        .data(dropAttributes)
         .enter()
         .append("option")
-        .attr("value", function(d){ return d })
+        .attr("value", function(d){ return attributes[dropAttributes.indexOf(d)] })
         .text(function(d){ return d });
   }
   
   function changeBasinLevel(index){
     document.getElementById("slider-text").innerHTML = 'Basin Level: ' + index.toString();
-
     //remove current layer before we switch
     //this method cycles through layers and removes all but 1 basemap. Might cause errors down the line
     //can access geoJSON layer by creating a global variable and redefining it under addLayer (not declaring again)
@@ -624,28 +665,28 @@
   //function to color map based on attribute
   function getColor(val){ //compare property against some categorization
     //check if 'expressed' is an attribute where color should be graduated per value or unique value
-    var varColor;
+    var valColor;
     try{
         if(basinLevel == 1) {
-          varColor = "#016c59";
+          valColor = "#016c59";
         } else if (expressed == "clz_cl_smj") {
-          varColor = climateZoneClasses[val].color;
+          valColor = climateZoneClasses[val].color;
         } else if (expressed == "glc_cl_smj") {
-          varColor = landCoverClasses[val].color;
+          valColor = landCoverClasses[val].color;
         }
         else if (basinLevel == 2){
-          varColor = "#67a9cf";
+          valColor = "#67a9cf";
         } else {
           //use d3 color scale generator
-          varColor = colorScale(val);
+          valColor = colorScale(val);
         }
     }
     catch(err){
-      console.log(err.name);
-      varColor = "#333333";   //if there is an error, set color as grey
+      console.log("error within getColor: ",err.name);
+      valColor = "#333333";   //if there is an error, set color as dark grey
     }
     finally{
-      return varColor;        //return appropriate color with or without error
+      return valColor;        //return appropriate color with or without error
     }
   }
 

@@ -13,6 +13,7 @@
   background: rgba(255,255,255,0.8);
   box-shadow: 0 0 15px rgba(0,0,0,0.2);
   border-radius: 5px;
+  max-width: 300px;
 }
 .info h2 {
   font-size: 24px;
@@ -69,15 +70,15 @@
   width: 2.0rem;
   border: 0px solid #eee;
   border-radius: 3px;
-  background: #e0e3e6;
+  background: none;
   padding:1px;
 }
 .step:hover {
-  background-color: rgb(215, 233, 239);
+  background-color: #9ed2eb;
   cursor: pointer;
 }
 .step:active {
-  background-color: rgb(173, 216, 230);
+  background-color: #93d6a0;
   cursor: pointer;
 }
 .step img {  
@@ -96,36 +97,63 @@ body {
 
 .header {
   overflow: hidden;
-  background-color: #eee;
+  background-color: #f2f4ff;
   padding: 8px 10px;
   text-align: center;
+  color: #063343;
+  background-image: linear-gradient(to bottom, #f2f4ff, #50999f29);
+  border-bottom:#007399 1px solid;
 }
 
 .header .map-button {
   float: left;
   color: black;
-  padding: 6px;
-  font-size: 18px;
-  line-height: 30px;
-  margin: 10px 10px;
-  border-radius: 4px;
-  border: blue 2px dotted;
+  padding: 10px;
+  margin: 10px 8px;
+  border: #eaecee 1px solid;
+  font: 16px/18px Arial, Helvetica, sans-serif;
+  background: white;
+  background: rgba(255,255,255,0.8);
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  border-radius: 5px;
 }
 
 .header .title {
+  font-family:Verdana, Geneva, Tahoma, sans-serif;
   font-size: 25px;
+  line-height: 25px;
   font-weight: bold;
-  border: 2px black dashed;
+  font-style: italic;
   float: right;
-  margin: 0 20px;
+  margin: 0 calc(25vw) 0 0;
 }
 .header .subtitle {
   font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
 }
 
 .header .map-button:hover {
-  background-color: #ddd;
+  background-color: #9ed2eb;
   color: black;
+}
+
+/*When screen is 1350 or less (decreasing) reduce title right margin so items don't stack*/
+@media screen and (max-width:1350px) {
+  .header .title {
+    margin: 0 calc(10vw) 0 0;
+  }
+}
+@media screen and (max-width:1000px) {
+  .header .title {
+    margin: 0 10px 0 0;
+  }
+}
+@media screen and (max-width:800px) {
+  .header .title {
+    font-size:20px;
+    margin: 0 2px 0 0;
+  }
 }
 
 /*when the screen is 500px wide or less, stack the links on top of each other */
@@ -139,10 +167,9 @@ body {
   }
   .header .title {
     float: none;
+    font-size:20px;
   }
 }
-
-
 
 /*Styling related to sidepanel plugin*/
 .header h1 {
