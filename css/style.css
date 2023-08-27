@@ -85,8 +85,35 @@
   width: 98%;
   height: 98%;
   padding:1px;
-  }  
+}
 
+.bi-arrows-angle-expand {
+  display: block;
+  transform: rotate(90deg) !important;
+}
+.leaflet-control-dialog{
+  font-size: 1rem;
+  font-family: Arial, Helvetica, sans-serif;
+
+}
+.leaflet-control-dialog-inner{
+  overflow:hidden;
+}
+.leaflet-control-dialog i {
+  color: #777;
+}
+.leaflet-control-dialog i:hover {
+  background-color: #ceeffe;
+}
+.dropdown{
+  font-size: 1rem;
+  font-family: Arial, Helvetica, sans-serif;
+  overflow: hidden;
+  width:220px
+}
+#dropdown-dialog p{
+  margin-top:0;
+}
 
 /*Styling related to webpage*/
 body {
@@ -135,6 +162,7 @@ body {
 
 .header .map-button:hover {
   background-color: #9ed2eb;
+  border: #9ed2eb 1px solid;
   color: black;
 }
 

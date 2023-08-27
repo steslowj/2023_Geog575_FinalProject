@@ -558,7 +558,35 @@
   //function to create a dropdown menu for attribute selection
   function createDropdown(data){
 
-    //code to create an array combining attributes (array) with descriptions of attributes. buggy with climate zone/land cover classes
+    //create a dialog box to hold the dropdown
+    var dialog = L.control.dialog({
+      size: [300,110],
+      minSize: [300,100],
+      maxSize: [800,800],
+      anchor:[140,20],
+      position: "topleft",
+      initOpen: true
+      })
+      .setContent("<div id='dropdown-dialog'><p>Select an attribute to display:</p></div>")
+      .addTo(map);
+
+      dialog.showClose();
+      dialog.showResize();
+
+      var basinDataButton = document.querySelector(".map-button"); //create var to hold selection
+      basinDataButton.addEventListener("click", function(){
+        dialog.open();
+        dialog.showClose();
+        dialog.showResize();
+      });
+
+      var resetViewButton = document.querySelector(".leaflet-control-resetview");
+      resetViewButton.addEventListener("click", function(){
+        dialog.setLocation([140,20]);
+      });
+
+
+    //creation of array to hold descriptive names of attributes
     var dropAttributes = [];
 
     for (var i = 0; i < attributes.length; i++) {
@@ -595,7 +623,7 @@
     }
     
     //add select element
-    var dropdown = d3.select(".sequence-control-container")
+    var dropdown = d3.select("#dropdown-dialog")      //.sequence-control-container
         .append("select")
         .attr("class", "dropdown")
         .on("change", function(){changeAttribute(this.value,data)}); //function to restyle map, legend
@@ -692,3 +720,4 @@
 
 
 })(); //wraps the initial function
+
