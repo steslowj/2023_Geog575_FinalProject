@@ -300,46 +300,52 @@
 
   //function to create a dialog box to hold the dropdown and add event handlers for toggle/reset view
   function createDialogs(){
-    //create the dialog control
-    var dialog = L.control.dialog({
+    //create dialog control to hold dropdown
+    var dropdownDialog = L.control.dialog({
       size: [280,110],
-      minSize: [280,100],
-      maxSize: [800,800],
+      minSize: [280,110],
+      maxSize: [280,110],
       anchor:[110,20],
       position: "topleft",
       initOpen: true
-      }).setContent("<div id='dropdown-dialog'><p>Select an attribute to display:</p></div>")
+      }).setContent("<div id='dropdown-dialog'><p>Select a basin attribute:</p></div>")
       .addTo(map);
 
+      //remove resizing option for dropdown dialog. Not helpful or necessary.
+      dropdownDialog.hideResize();
+
+      //create dialog control to hold chart
       var chartDialog = L.control.dialog({
-        size: [500,700],
+        size: [700,700],
         minSize: [200,100],
         maxSize: [1000,1000],
         anchor: [400,20],
         position: "topleft",
         initOpen: true
-      }).setContent("<div id='chart-dialog'><p>Thinking of making a histogram instead of a bar chart <i class='bi bi-bar-chart-fill'></i></p><p>We don't have enough time for a bivariate but I think a histogram with one variable may be more interesting for this dataset.</div>")
+      }).setContent("<div id='chart-dialog'><p style='display:none;'>Histogram for basin attribute:</p></div>")
       .addTo(map);
 
       //add a toggle icon to the Data Per Basin button
       document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-on'></i>";
       
-      //add event listener to dialog close and add event to switch toggle to off
-      var closeDialog = document.querySelector(".leaflet-control-dialog-close")
-      closeDialog.addEventListener("click", function(){
-        document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-off'></i>";  
-      });
+      //add event listener to both dialogs so dialog close button also switches toggle to off
+      var closeDialog = document.querySelectorAll(".leaflet-control-dialog-close")
+      closeDialog.forEach(function(dialog){
+        dialog.addEventListener("click", function(){
+          document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-off'></i>";  
+        })
+      })
       
-      //add event listeners to Data Per Basin button to open or close the dialog and switch the toggle
+      //add event listeners to Data Per Basin button to open or close both dialogs and switch the toggle
       var basinDataButton = document.querySelector(".map-button"); //create var to hold selection
       basinDataButton.addEventListener("click", function(){
         if (document.querySelector(".leaflet-control-dialog").style.visibility === "hidden"){
-          dialog.open();
-          dialog.setSize([300,110]);
-          dialog.setLocation([110,20]);
+          dropdownDialog.open();                      chartDialog.open();
+          dropdownDialog.setSize([280,110]);          chartDialog.setSize([700,700]);
+          dropdownDialog.setLocation([110,20]);       chartDialog.setLocation([400,20]);
           document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-on'></i>";
         } else {
-          dialog.close();
+          dropdownDialog.close();                     chartDialog.close();
           document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-off'></i>";
         }
       });
@@ -351,8 +357,6 @@
         dialog.setSize([300,110]);
         if(innerWidth < 1000){map.setView([37.8,-96],4)};
       });
-
-
   }
 
   //function to handle geojson fetch and return
@@ -396,7 +400,8 @@
   function calcStatsAndColorScale(data){
     basinVals = []; //reset to empty in case this function is after the slider is changed
     stats = [];
-      for (basin of data.features){
+    basinVals.push(data.features[0].properties[expressed]); //for loop misses the very first basin
+      for (var basin of data.features){
         var val = basin.properties[expressed];
         basinVals.push(val);
       };
@@ -560,7 +565,7 @@
     info.addTo(map);
 
     setLegend();            //function to set up the legend based on current attributes
-    createDropdown(data);   //function to create dropdown which allows user to change attributes
+    createDropdownAndChart(data);   //function to create dropdown which allows user to change attributes
   }
 
   function setLegend(){
@@ -623,7 +628,7 @@
   }
 
   //function to create a dropdown menu for attribute selection
-  function createDropdown(data){
+  function createDropdownAndChart(data){
 
     //creation of array to hold descriptive names of attributes
     var dropAttributes = [];
@@ -682,8 +687,97 @@
         .append("option")
         .attr("value", function(d){ return attributes[dropAttributes.indexOf(d)] })
         .text(function(d){ return d });
+
+    makeChart(dropAttributes);
   }
-  
+
+  function makeChart(dropAttributes){
+
+    //code to add a chart title based on current attribute
+    document.querySelector("#chart-dialog").insertAdjacentHTML("beforeend", 
+    "<div class='chart-title'><p style='margin:0;'>" + dropAttributes[attributes.indexOf(expressed)].split(":")[0] + "</p>" +  
+    "<h3 style='margin-top:0;'>" + dropAttributes[attributes.indexOf(expressed)].split(":")[1] + "</h3></div>");
+
+    document.querySelector("#chart-dialog").insertAdjacentHTML("afterend", "<p class='chart-text'>Total number of basins: " + basinVals.length);
+
+    //declare the chart dimensions and margins
+    const width = 650;
+    const height = 500;
+    const marginTop = 20;
+    const marginRight = 20;
+    const marginBottom = 30;
+    const marginLeft = 20;
+
+    //threshold value sensitive to number of basins, could look through d3 threshold generators
+    var threshold = "";
+    if(basinVals.length < 10){threshold = basinVals.length}
+    else if (basinVals.length < 100){threshold = basinVals.length/5}
+    else if (basinVals.length < 1000){threshold = basinVals.length/40}
+    else {threshold = 60}
+
+    //bin the data
+    const bins = d3.bin()
+        .thresholds(threshold)
+        .value((d) => d)
+        (basinVals);
+
+    //declare the x (horizontal position) scale
+    const x = d3.scaleLinear()
+        .domain([bins[0].x0, bins[bins.length - 1].x1])
+        .range([marginLeft, width - marginRight]);
+
+    //declare the y (vertical position) scale
+    const y = d3.scaleLinear()
+        .domain([0, d3.max(bins, (d) => d.length)])
+        .range([height - marginBottom, marginTop]);
+
+    //create the SVG container and attach to chart-dialog
+    const svg = d3.select("#chart-dialog")
+        .append("svg")
+        .attr("class","chart")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("viewBox", [0, 0, width, height])
+        .attr("style", "max-width: 100%; height: auto;");
+
+    //add a rectangle for each bin
+    svg.append("g")
+        .attr("fill", "#5db0b7")
+      .selectAll()
+      .data(bins)
+      .join("rect")
+        .attr("x", (d) => x(d.x0) + 1)
+        .attr("width", (d) => x(d.x1) - x(d.x0) - 1)
+        .attr("y", (d) => y(d.length))
+        .attr("height", (d) => y(0) - y(d.length));
+
+    //add the x-axis and label
+    svg.append("g")
+        .attr("transform", `translate(0,${height - marginBottom})`)
+        .call(d3.axisBottom(x).ticks(width / 80).tickSizeOuter(0))
+        .call((g) => g.append("text")
+            .attr("x", width)
+            .attr("y", marginBottom - 4)
+            .attr("fill", "currentColor")
+            .attr("text-anchor", "end")
+            .text(function(){ return dropAttributes[attributes.indexOf(expressed)].split(":")[1] }));
+
+    //add the y-axis and label, and remove the domain line
+    svg.append("g")
+        .attr("transform", `translate(${marginLeft},0)`)
+        .call(d3.axisLeft(y).ticks(height / 40))
+        .call((g) => g.select(".domain").remove())
+        .call((g) => g.append("text")
+            .attr("x", -marginLeft)
+            .attr("y", 10)
+            .attr("fill", "currentColor")
+            .attr("text-anchor", "start")
+            .text("↑ Frequency (no. of basins)"));
+    
+    //return the SVG element
+    return svg.node()
+  }
+
   function changeBasinLevel(index){
     document.getElementById("slider-text").innerHTML = 'Basin Level: ' + index.toString();
     //remove current layer before we switch
@@ -695,11 +789,13 @@
       layCount +=1;
     });
 
-    //remove legend, info, dropdown
+    //remove legend, info, dropdown, chart
     map.removeControl(legend);
     map.removeControl(info);
-    var dropdown = d3.select(".dropdown")
-        .remove();
+    var dropdown = d3.select(".dropdown").remove();
+    var chartTitle = d3.select(".chart-title").remove();
+    var chart = d3.select(".chart").remove();
+    var chartText = d3.select(".chart-text").remove();
 
     //triggers new load of topojson for basin of "index" level, which creates new: layer, legend, info, dropdown
     getData(index);

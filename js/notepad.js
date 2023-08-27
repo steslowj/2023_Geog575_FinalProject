@@ -145,6 +145,92 @@
 
 
 
+    function makeChart(dropAttributes){
+
+      //declare the chart dimensions and margins
+      const width = 600;
+      const height = 500;
+      const marginTop = 20;
+      const marginRight = 20;
+      const marginBottom = 30;
+      const marginLeft = 20;
+  
+      //bin the data
+      const bins = d3.bin()
+          .thresholds(10)
+          .value((d) => d)
+          (basinVals);
+  
+      //declare the x (horizontal position) scale
+      const x = d3.scaleLinear()
+          .domain([bins[0].x0, bins[bins.length - 1].x1])
+          .range([marginLeft, width - marginRight]);
+  
+      //declare the y (vertical position) scale
+      const y = d3.scaleLinear()
+          .domain([0, d3.max(bins, (d) => d.length)])
+          .range([height - marginBottom, marginTop]);
+  
+      //create the SVG container and attach to chart-dialog
+      const svg = d3.select("#chart-dialog")
+          .append("svg")
+          .attr("class","chart")
+          .attr("width", width)
+          .attr("height", height)
+          .attr("viewBox", [0, 0, width, height])
+          .attr("style", "max-width: 100%; height: auto;");
+  
+      var chartTitle = d3.select("#chart-dialog")
+        .attr("class","chartTitle");
+  
+      //add a rectangle for each bin
+      svg.append("g")
+          .attr("fill", "#5db0b7")
+        .selectAll()
+        .data(bins)
+        .join("rect")
+          .attr("x", (d) => x(d.x0) + 1)
+          .attr("width", (d) => x(d.x1) - x(d.x0) - 1)
+          .attr("y", (d) => y(d.length))
+          .attr("height", (d) => y(0) - y(d.length));
+  
+      //add the x-axis and label
+      svg.append("g")
+          .attr("transform", `translate(0,${height - marginBottom})`)
+          .call(d3.axisBottom(x).ticks(width / 80).tickSizeOuter(0))
+          .call((g) => g.append("text")
+              .attr("x", width)
+              .attr("y", marginBottom - 4)
+              .attr("fill", "currentColor")
+              .attr("text-anchor", "end")
+              .text(function(){ return dropAttributes[attributes.indexOf(expressed)] }));
+  
+      //add the y-axis and label, and remove the domain line
+      svg.append("g")
+          .attr("transform", `translate(${marginLeft},0)`)
+          .call(d3.axisLeft(y).ticks(height / 40))
+          .call((g) => g.select(".domain").remove())
+          .call((g) => g.append("text")
+              .attr("x", -marginLeft)
+              .attr("y", 10)
+              .attr("fill", "currentColor")
+              .attr("text-anchor", "start")
+              .text("↑ Frequency (no. of counties)"));
+      
+      //return the SVG element
+      return svg.node()
+    }
+
+
+
+
+
+
+
+
+
+
+
 
 
     
