@@ -66,8 +66,8 @@
         "rdd": "Road density",
         "gdp": "Gross Domestic Product"
       }
-  const attrUnit = 
-        {"m3": "cubic meters per second",
+  const attrUnit = {
+        "m3": "cubic meters per second",
         "mm": "millimeters",
         "pc": "percent",
         "ha": "hectares",
@@ -90,13 +90,18 @@
         "PFAF_ID": "",
         "ORDER_": "nth order"
       };
-  const attrExtent = 
-        {"p": "at sub-basin pour point",
+  const attrExtent = {
+        "p": "at sub-basin pour point",
         "s": "per sub-basin",
         "u": "above sub-basin" //"in total watershed of sub-basin pour point"
       };
-  const attrDimension = 
-        {"yr": "annual average",
+  const attrExtentLong = {
+        "p": "at sub-basin pour point",
+        "s": "per sub-basin",
+        "u": "in total watershed of sub-basin pour point"
+      };
+  const attrDimension = {
+        "yr": "annual average",
         "mn": "annual minimum",
         "mx": "annual maximum",
         "lt": "long-term maximum",
@@ -189,6 +194,8 @@
       worldCopyJump: true
     }).setView([37.8, -96], 5);
 
+    if(innerWidth < 1000) {map.setView([37.8,-96],4)};
+
     //moves zoom to topright, 1st control placed so 1st at the top
     var zooms = L.control.zoom({position:'topright'}).addTo(map);
 
@@ -207,7 +214,7 @@
     createSequenceControls();
 
     //function to create dialog div for droptown of attributes to sit in
-    createDialog();
+    createDialogs();
 
     //Leaflet method to add a scale, default is bottom left
     L.control.scale().addTo(map);
@@ -291,36 +298,44 @@
     });
   }
 
-  function createDialog(){
-    //create a dialog box to hold the dropdown
+  //function to create a dialog box to hold the dropdown and add event handlers for toggle/reset view
+  function createDialogs(){
+    //create the dialog control
     var dialog = L.control.dialog({
-      size: [300,110],
-      minSize: [300,100],
+      size: [280,110],
+      minSize: [280,100],
       maxSize: [800,800],
       anchor:[110,20],
       position: "topleft",
       initOpen: true
-      })
-      .setContent("<div id='dropdown-dialog'><p>Select an attribute to display:</p></div>")
+      }).setContent("<div id='dropdown-dialog'><p>Select an attribute to display:</p></div>")
       .addTo(map);
 
-      dialog.showClose();
-      dialog.showResize();
+      var chartDialog = L.control.dialog({
+        size: [500,700],
+        minSize: [200,100],
+        maxSize: [1000,1000],
+        anchor: [400,20],
+        position: "topleft",
+        initOpen: true
+      }).setContent("<div id='chart-dialog'><p>Thinking of making a histogram instead of a bar chart <i class='bi bi-bar-chart-fill'></i></p><p>We don't have enough time for a bivariate but I think a histogram with one variable may be more interesting for this dataset.</div>")
+      .addTo(map);
 
+      //add a toggle icon to the Data Per Basin button
       document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-on'></i>";
       
+      //add event listener to dialog close and add event to switch toggle to off
       var closeDialog = document.querySelector(".leaflet-control-dialog-close")
       closeDialog.addEventListener("click", function(){
         document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-off'></i>";  
       });
       
+      //add event listeners to Data Per Basin button to open or close the dialog and switch the toggle
       var basinDataButton = document.querySelector(".map-button"); //create var to hold selection
       basinDataButton.addEventListener("click", function(){
         if (document.querySelector(".leaflet-control-dialog").style.visibility === "hidden"){
           dialog.open();
           dialog.setSize([300,110]);
-          dialog.showClose();
-          dialog.showResize();
           dialog.setLocation([110,20]);
           document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-on'></i>";
         } else {
@@ -334,7 +349,10 @@
       resetViewButton.addEventListener("click", function(){
         dialog.setLocation([110,20]);
         dialog.setSize([300,110]);
+        if(innerWidth < 1000){map.setView([37.8,-96],4)};
       });
+
+
   }
 
   //function to handle geojson fetch and return
@@ -489,14 +507,14 @@
       var expressedSplit = expressed.split('_');
       //special description for parameters with "less coded" names
       if (basinLevel == 1){
-        try {description = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ? '<b>' + props[expressed] + '</b>'
+        try {description = '<h2>' + expressed + '</h2>' + '<p>' + description + '</p>' + (props ? '<b>' + props[expressed] + '</b>'
           : 'Hover over a basin')
         } catch {description = ""}
         this._div.innerHTML = '<p>Basin Level 1 is the entire ground surface, undivided. This map shows how hydroSHEDS divides Level 1 into Level 2 watersheds around the world. Watersheds on this Basin Level have minimal attributes.<p>' + description;
       }
       else if (basinGeoSet.has(expressed)==true){
         description = attrDescription[expressed];
-        this._div.innerHTML = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ?
+        this._div.innerHTML = '<h2>' + expressed + '</h2>' + '<p>' + description + '</p>' + (props ?
           '<b>' + props[expressed] + ' ' + attrUnit[expressed] + '</b>'
           : 'Hover over a basin');
       }
@@ -504,7 +522,7 @@
       else if (expressedSplit[2] == "smj"){
         description = '<h2>' + attrDescription[expressedSplit[0]] + '</h2>'
         + " class majority <br>"
-        + attrExtent[expressedSplit[2].slice(0,1)];
+        + attrExtentLong[expressedSplit[2].slice(0,1)];
 
         if (expressedSplit[0] == "clz"){
           this._div.innerHTML = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ?
@@ -520,7 +538,7 @@
       //special description for percent of land cover classes
       else if (expressedSplit[0] == "glc"){
         description = '<h2>' + attrDescription[expressedSplit[0]] + '</h2>'+ ' ' 
-        + attrExtent[expressedSplit[2].slice(0,1)] + ': <h3>'
+        + attrExtentLong[expressedSplit[2].slice(0,1)] + ': <h3>'
         + landCoverClasses[parseInt(expressedSplit[2].slice(1))].classDesc + '</h3>';
 
         this._div.innerHTML = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ?
@@ -530,7 +548,7 @@
       //the most 'standard' version
       else {
         description = '<h2>' + attrDescription[expressedSplit[0]] + '</h2>' 
-            + attrExtent[expressedSplit[2].slice(0,1)] + '<br>'
+            + attrExtentLong[expressedSplit[2].slice(0,1)] + '<br>'
             + attrDimension[expressedSplit[2].slice(1)];
 
         this._div.innerHTML = '<h4>' + expressed + '</h4>' + '<p>' + description + '</p>' + (props ?
@@ -607,9 +625,6 @@
   //function to create a dropdown menu for attribute selection
   function createDropdown(data){
 
-    
-
-
     //creation of array to hold descriptive names of attributes
     var dropAttributes = [];
 
@@ -643,7 +658,7 @@
               + attrDimension[attrSplit[2].slice(1)];
         }
       }
-      dropAttributes.push(dropText);
+      dropAttributes.push((i+1) +'. ' + dropText);
     }
     
     //add select element
