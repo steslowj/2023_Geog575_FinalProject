@@ -10,7 +10,7 @@ Jack: Today, we are going to take a cruise on the Mighty Mississippi and learn a
 
 Jess goes into description of project [Looking at data from the hydroshed’s global db; from the Mississippi’s watershed. This area is defined as all the water that flows towards the Mississippi river. [maybe insert fact stating how many gallons of water flow thru the MS]
 
-Jack: And YES – that’s a lot of water!
+Jack: And YES – that’s a lot of water! What do some of these different controls and gadgets on our webmap do??
 
 Jess: This shows the MS watershed with different basin levels, which show watersheds within watersheds.
 
