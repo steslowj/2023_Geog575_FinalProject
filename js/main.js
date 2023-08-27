@@ -318,6 +318,7 @@
       basinDataButton.addEventListener("click", function(){
         if (document.querySelector(".leaflet-control-dialog").style.visibility === "hidden"){
           dialog.open();
+          dialog.setSize([300,110]);
           dialog.showClose();
           dialog.showResize();
           dialog.setLocation([110,20]);
@@ -328,9 +329,11 @@
         }
       });
 
+      //set listener on reset view button to also reset the location and size of the dialog
       var resetViewButton = document.querySelector(".leaflet-control-resetview");
       resetViewButton.addEventListener("click", function(){
         dialog.setLocation([110,20]);
+        dialog.setSize([300,110]);
       });
   }
 
