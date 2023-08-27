@@ -206,6 +206,9 @@
     //function to create the slider for sequencing between basin levels
     createSequenceControls();
 
+    //function to create dialog div for droptown of attributes to sit in
+    createDialog();
+
     //Leaflet method to add a scale, default is bottom left
     L.control.scale().addTo(map);
 
@@ -286,6 +289,49 @@
         basinLevel = index;
         changeBasinLevel(index);
     });
+  }
+
+  function createDialog(){
+    //create a dialog box to hold the dropdown
+    var dialog = L.control.dialog({
+      size: [300,110],
+      minSize: [300,100],
+      maxSize: [800,800],
+      anchor:[110,20],
+      position: "topleft",
+      initOpen: true
+      })
+      .setContent("<div id='dropdown-dialog'><p>Select an attribute to display:</p></div>")
+      .addTo(map);
+
+      dialog.showClose();
+      dialog.showResize();
+
+      document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-on'></i>";
+      
+      var closeDialog = document.querySelector(".leaflet-control-dialog-close")
+      closeDialog.addEventListener("click", function(){
+        document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-off'></i>";  
+      });
+      
+      var basinDataButton = document.querySelector(".map-button"); //create var to hold selection
+      basinDataButton.addEventListener("click", function(){
+        if (document.querySelector(".leaflet-control-dialog").style.visibility === "hidden"){
+          dialog.open();
+          dialog.showClose();
+          dialog.showResize();
+          dialog.setLocation([110,20]);
+          document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-on'></i>";
+        } else {
+          dialog.close();
+          document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-off'></i>";
+        }
+      });
+
+      var resetViewButton = document.querySelector(".leaflet-control-resetview");
+      resetViewButton.addEventListener("click", function(){
+        dialog.setLocation([110,20]);
+      });
   }
 
   //function to handle geojson fetch and return
@@ -558,46 +604,7 @@
   //function to create a dropdown menu for attribute selection
   function createDropdown(data){
 
-    //create a dialog box to hold the dropdown
-    var dialog = L.control.dialog({
-      size: [300,110],
-      minSize: [300,100],
-      maxSize: [800,800],
-      anchor:[110,20],
-      position: "topleft",
-      initOpen: true
-      })
-      .setContent("<div id='dropdown-dialog'><p>Select an attribute to display:</p></div>")
-      .addTo(map);
-
-      dialog.showClose();
-      dialog.showResize();
-
-      document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-on'></i>";
-      
-      var closeDialog = document.querySelector(".leaflet-control-dialog-close")
-      closeDialog.addEventListener("click", function(){
-        document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-off'></i>";  
-      });
-      
-      var basinDataButton = document.querySelector(".map-button"); //create var to hold selection
-      basinDataButton.addEventListener("click", function(){
-        if (document.querySelector(".leaflet-control-dialog").style.visibility === "hidden"){
-          dialog.open();
-          dialog.showClose();
-          dialog.showResize();
-          dialog.setLocation([110,20]);
-          document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-on'></i>";
-        } else {
-          dialog.close();
-          document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-off'></i>";
-        }
-      });
-
-      var resetViewButton = document.querySelector(".leaflet-control-resetview");
-      resetViewButton.addEventListener("click", function(){
-        dialog.setLocation([110,20]);
-      });
+    
 
 
     //creation of array to hold descriptive names of attributes

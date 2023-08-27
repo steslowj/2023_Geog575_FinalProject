@@ -1,7 +1,7 @@
 /*Styling related to Leaflet map*/
 
 #map {
-  height: calc(100vh - 82px); /*Npx is height of padding and line height of header, no stack */
+  height: calc(100vh - 76px); /*Npx is height of padding and line height of header, no stack */
   width: 100%;
   margin: 0;
   padding: 0;
