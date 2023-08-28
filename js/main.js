@@ -328,10 +328,10 @@
 
       //create dialog control to hold chart
       var chartDialog = L.control.dialog({
-        size: [700,700],
+        size: [500,500],
         minSize: [200,100],
         maxSize: [1000,1000],
-        anchor: [400,20],
+        anchor: [300,20],
         position: "topleft",
         initOpen: true
       }).setContent("<div id='chart-dialog'><p style='display:none;'>Histogram for basin attribute:</p></div>")
@@ -353,8 +353,8 @@
       basinDataButton.addEventListener("click", function(){
         if (document.querySelector(".leaflet-control-dialog").style.visibility === "hidden"){
           dropdownDialog.open();                      chartDialog.open();
-          dropdownDialog.setSize([280,110]);          chartDialog.setSize([700,700]);
-          dropdownDialog.setLocation([110,20]);       chartDialog.setLocation([400,20]);
+          dropdownDialog.setSize([280,110]);          chartDialog.setSize([500,500]);
+          dropdownDialog.setLocation([110,20]);       chartDialog.setLocation([300,20]);
           document.querySelector("#attr-toggle").innerHTML = "<i class='bi bi-toggle-on'></i>";
         } else {
           dropdownDialog.close();                     chartDialog.close();
