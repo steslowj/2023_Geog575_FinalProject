@@ -13,6 +13,7 @@
   var info;
   var colorScale;
   var breakPoints;
+  var dropAttributes = [];
   
   //array for data file paths to use
   const basinFilePath = [
@@ -642,8 +643,8 @@
   //function to create a dropdown menu for attribute selection
   function createDropdownAndChart(data){
 
-    //creation of array to hold descriptive names of attributes
-    var dropAttributes = [];
+    //resetting array to hold descriptive names of attributes
+    dropAttributes = [];
 
     for (var i = 0; i < attributes.length; i++) {
       var attr = attributes[i];
@@ -700,10 +701,10 @@
         .attr("value", function(d){ return attributes[dropAttributes.indexOf(d)] })
         .text(function(d){ return d });
 
-    makeChart(dropAttributes);
+    makeChart();
   }
 
-  function makeChart(dropAttributes){
+  function makeChart(){
 
     //code to add a chart title based on current attribute
     document.querySelector("#chart-dialog").insertAdjacentHTML("beforeend", 
@@ -835,6 +836,11 @@
 
         //update the info control with new attribute info
         info.update(data.properties);
+
+        var chartTitle = d3.select(".chart-title").remove();
+        var chart = d3.select(".chart").remove();
+        var chartText = d3.select(".chart-text").remove();
+        makeChart();
   }
 
   //function to color map based on attribute
